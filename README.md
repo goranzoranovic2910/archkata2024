@@ -932,6 +932,112 @@ How It Works:
 - **MatchingService:** Admins can change the skill-matching strategy (e.g., switch between Cosine Similarity and LLM).
 - **User:** Admins can update general user data for both candidates and employers.
 
+### Reporting Endpoint
+
+
+### Reporting Endpoint for ClearView
+
+The Reporting API in ClearView is divided into two key sections: **Business Reporting** and **Service Review**. These sections provide crucial insights into system performance, user engagement, and the health of services.
+
+#### 1. Business Reporting
+The **Business Reporting** section focuses on metrics related to users, job postings, and the effectiveness of ClearView’s matching process. It helps employers and system administrators gain insights into the candidate pool, job activity, and the accuracy of the matching algorithm, providing data-driven feedback on the platform’s performance. Key API methods include:
+
+- **getActiveCandidates**:  
+  Retrieves the number of active candidates over a given period.  
+  Parameters: `dateFrom`, `dateTo`  
+  Response: `{timelineData: [{date: '2024-01-01', count: 1400}, ...]}`
+  
+- **getActiveEmployers**:  
+  Retrieves the number of active employers over a given period.  
+  Parameters: `dateFrom`, `dateTo`  
+  Response: `{timelineData: [{date: '2024-01-01', count: 280}, ...]}`
+
+- **getActiveJobs**:  
+  Retrieves the number of active job postings within a time range.  
+  Parameters: `dateFrom`, `dateTo`  
+  Response: `{timelineData: [{date: '2024-01-01', count: 750}, ...]}`
+
+- **getScoreVsOfferComparison**:  
+  Provides a histogram showing the distribution of scores and the number of candidates receiving job offers within each score range. This helps determine the accuracy of the matching algorithm by correlating high scores with high job offer counts.  
+  Parameters: None  
+  Response: `{histogram: [{scoreRange: '0-10', offersCount: 5}, ...]}`
+
+- **getScoreVsRejectComparison**:  
+  Similar to the previous method, this histogram focuses on candidates who were rejected, comparing the distribution of rejection rates against score ranges.  
+  Parameters: None  
+  Response: `{histogram: [{scoreRange: '0-10', rejectsCount: 40}, ...]}`
+
+- **getDemographicOfferRejectBreakdown**:  
+  Provides data on offers and rejections categorized by demographic groups, offering insights into the diversity and inclusiveness of the hiring process.  
+  Response: `{demographicData: {gender: {offers: {...}, rejections: {...}}, ethnicity: {...}}}`
+
+- **getEmployerSurveyData**:  
+  Retrieves employer feedback, likely sourced from an integrated survey service, offering insights into the employer's experience with the platform.  
+  Response: `{surveyResults: [...]}`
+
+- **getCandidateSurveyData**:  
+  Similarly, retrieves candidate feedback to evaluate the candidate experience on the platform.  
+  Response: `{surveyResults: [...]}`
+
+#### 2. Service Review
+The **Service Review** section monitors the health and performance of ClearView’s services, including metrics related to errors, downtime, and performance of the **LLM services**. Key API methods include:
+
+- **getErrorsOverview**:  
+  Provides a breakdown of errors across pages, endpoints, or services to help identify and address system issues.  
+  Parameters: `filterBy: page/endpoint/service`  
+  Response: `{totalErrors: 50, errorsByEndpoint: {...}}`
+
+- **getCrashesOverview**:  
+  Retrieves data on system crashes, providing an overview of system stability.  
+  Response: `{totalCrashes: 5, crashDetails: [...]}`
+
+- **getServiceDowntime**:  
+  Provides details on service downtime, broken down by different services.  
+  Response: `{totalDowntime: '5 hours', breakdown: {...}}`
+
+- **getLLMLatency**:  
+  Reports on the latency of LLM services, helping monitor and optimize LLM performance.  
+  Response: `{averageLatency: 200ms, breakdownByService: {...}}`
+
+- **getLLMCost**:  
+  Provides cost data related to running LLM services, offering insights into the financial impact of these operations.  
+  Response: `{totalCost: 1500, breakdownByUsage: {...}}`
+
+- **getLLMCapacityUsage**:  
+  Reports on the capacity usage of the LLM service to ensure the system is operating within its performance limits.  
+  Response: `{totalCapacityUsed: 75%, usageDetails: {...}}`
+
+#### API Endpoints Overview:
+
+- `/api/reporting/business/activeCandidates` – Returns active candidate count and timeline.
+- `/api/reporting/business/activeEmployers` – Returns active employer count and timeline.
+- `/api/reporting/business/activeJobs` – Returns active job count and timeline.
+- `/api/reporting/business/scoreOfferComparison` – Compares score vs. job offers.
+- `/api/reporting/business/scoreRejectComparison` – Compares score vs. rejections.
+- `/api/reporting/business/demographicOfferRejectBreakdown` – Breaks down offers/rejections by demographics.
+- `/api/reporting/business/employerSurvey` – Retrieves employer survey data.
+- `/api/reporting/business/candidateSurvey` – Retrieves candidate survey data.
+- `/api/reporting/service/errorsOverview` – Provides an error overview by endpoint/service.
+- `/api/reporting/service/crashesOverview` – Retrieves system crash data.
+- `/api/reporting/service/serviceDowntime` – Retrieves downtime data for services.
+- `/api/reporting/service/llmLatency` – Returns LLM latency data.
+- `/api/reporting/service/llmCost` – Provides cost details for LLM operations.
+- `/api/reporting/service/llmCapacity` – Retrieves LLM capacity usage data.
+
+Class diagram
+
+<img src="diagrams/reporting_class_diagram.png">
+
+#### Triggering data aggregation
+
+Data agregation is triggered on a monthly basis by Admin. To trigger it we will use ```runDataAggregation(dateFrom, dateTo)```. This method will run backend process to gather data. Since we are operating on single database, all the aggregation we need at this point can be covered by a Database job. 
+
+This job could potentially be triggered by schedule in Database, however, based on requirements we want to allow Admin to trigger it as well.
+
+**runDataAggregation** : Runs database job to gather monthly data.
+Parameters: ```dateFrom```,```dateTo```
+
+- `/api/reporting/service/runDataAggregation`
 
 ## Storage
 ### Database
