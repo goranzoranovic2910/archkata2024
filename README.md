@@ -1,7 +1,5 @@
 # Clear View Solution
  
-
-
 ## Equi Hire Architects Team
 
 We are a team of software engineers from Microsoft Serbia very passionate about software architecture. We have been practicing architectural katas inside our team inspired by books and videos from Neal Ford and Mark Richards. This time we decided to challenge ourselves and participate in official event.
@@ -17,12 +15,28 @@ We are a team of software engineers from Microsoft Serbia very passionate about 
 - [Identifying architecture characteristics](#identifying-architecture-characteristics)
 - [Domain analysis](#domain-analysis)
 - [Architecture](#architecture)
+    - [Top level architecture](#top-level-architecture)
+    - [Architecture Decision Records](#architecture-decision-records)
 - [AI Backend](#ai-backend)
+    - [AI Tips Service](#ai-tips-service)
+    - [Anonymization Service](#anonymization-service)
+    - [Matching Service](#matching-service)
 - [Integration](#integration)
 - [REST API](#rest-api)
+    - [Candidate Endpoint](#candidate-endpoint)
+    - [Employer Endpoint](#employer-endpoint)
+    - [Administrator Endpoint](#administrator-endpoint)
+    - [Reporting Endpoint](#reporting-endpoint)
+        - [Triggering data aggregation](#triggering-data-aggregation)
 - [Storage](#storage)
+   - [Database](#database)
+   - [Schema considerations](#schema-considerations)
+   - [File Storage](#file-storage)
 - [External services](#external-services)
 - [Additional considerations](#additional-considerations)
+   - [Evolvability](#evolvability)
+   - [Scalability](#scalability)
+   - [Premium Business Model](#premium-business-model)
 
 ## Company overview
 
@@ -934,9 +948,6 @@ How It Works:
 
 ### Reporting Endpoint
 
-
-### Reporting Endpoint for ClearView
-
 The Reporting API in ClearView is divided into two key sections: **Business Reporting** and **Service Review**. These sections provide crucial insights into system performance, user engagement, and the health of services.
 
 #### 1. Business Reporting
@@ -1118,7 +1129,7 @@ While there is potential to add AI-driven features in the future, the exact natu
 
 While ClearView does not expect to handle more than **5,000 active candidates** simultaneously (assumption confirmed by subject expert) in the near future, the current architecture is designed to be **scalable** enough to accommodate larger volumes of requests if necessary. By **separating the REST API from the backend services**, we have ensured that the system can scale flexibly based on demand. This separation allows us to independently scale critical components, such as the API layer or individual services like matching and anonymization, ensuring that performance remains consistent even as the user base grows.
 
-### Business model (Premium)
+### Premium Business model
 
 We are considering introducing a **Premium account** option for employers, which would unlock additional **AI-powered features** to enhance the hiring process. One such feature could be the use of **LLM-based matching** instead of the default **Cosine Similarity**. LLM matching, powered by advanced language models, could provide employers with **higher-quality candidate matches** by understanding the deeper context of job descriptions and resumes. However, running LLMs for matching is significantly more **costly** compared to Cosine Similarity, which is why we are exploring offering it as part of a premium service tier. This allows us to deliver enhanced functionality to employers who need it while keeping overall costs manageable for the system.
 
