@@ -4,14 +4,25 @@
 
 ## Equi Hire Architects Team
 
-- Uros Milivojevic
-- Marjan Slavkovski
-- Rastko Djordjevic
-- Goran Zoranovic
+We are a team of software engineers from Microsoft Serbia very passionate about software architecture. We have been practicing architectural katas inside our team inspired by books and videos from Neal Ford and Mark Richards. This time we decided to challenge ourselves and participate in official event.
+
+- [Uros Milivojevic](https://www.linkedin.com/in/urosmilivojevic/)
+- [Marjan Slavkovski](https://www.linkedin.com/in/marjan-s/)
+- [Rastko Djordjevic](https://www.linkedin.com/in/rastko-djordjevic/)
+- [Goran Zoranovic](https://www.linkedin.com/in/goranzoranovic/)
 
 ## Table of contents
-
-TODO:
+- [Company overview](#company-overview)
+- [Requirements](#requirements)
+- [Identifying architecture characteristics](#identifying-architecture-characteristics)
+- [Domain analysis](#domain-analysis)
+- [Architecture](#architecture)
+- [AI Backend](#ai-backend)
+- [Integration](#integration)
+- [REST API](#rest-api)
+- [Storage](#storage)
+- [External services](#external-services)
+- [Additional considerations](#additional-considerations)
 
 ## Company overview
 
@@ -88,6 +99,8 @@ We landed on next domains:
 
 - Reporting Endpoint - REST API component covering methods needed for Monthly reporting.
 
+- Anonymization Service - Service which is creating anonymized version of resume.
+
 - AI Tips Service - Service providing tips for the Candidate resume.
 
 - Matching Service - Service making actual matches based on skills extracted from job ads and resumes.
@@ -102,7 +115,7 @@ files.
 
 ### Architecture Decision Records
 
-Here is the list of all ADRs we made during the process to came up with architecture we designed. Full ADRs can be found through links in the table.
+Here is the condensed list of all ADRs we made during the process to came up with architecture we designed. Full ADRs can be found through links in the table.
 
 
 |ADR #| 	Title| 	Why |	Trade-offs 	| Link |
@@ -114,7 +127,7 @@ Here is the list of all ADRs we made during the process to came up with architec
 |05 |	One relational database and one file-storage DB |	Simplifies maintenance by reducing the number of databases, combining multiple domains into one relational DB.| Resumes need separate file storage.	May compromise modularity and separation of concerns between domains, leading to potential scaling or data management challenges later. However big scalability is not expected so we feel comfortable in making this decision.	|<a href="adr/adr05.md">ADR05</a>|
 |06 |	Split database by schema to decouple domains and improve security|	Improves fault-tolerance and security by separating candidate, employer, matching, and analytics data into schemas. |	More complex database management, requiring careful handling of schema-specific optimizations and inter-schema queries. |	<a href="adr/adr06.md">ADR06</a>|
 |07 |	Analytics as part of regular database| 	Simplifies architecture by embedding analytics within the regular database, avoiding real-time analytics complexity. |	May limit future analytics capabilities if real-time or advanced analytics are needed, and could add extra load to the operational database. However, it should be fairly easy to move this data to separate database if needed.|	<a href="adr/adr07.md">ADR07</a>|
-|08 |	Split AI tips and matching services |	Decouples AI tips and matching services, making the system simpler and easier to scale independently.  |	Requires coordination between services and careful orchestration of dependencies if they need to interact, adding complexity in integration. On the other hand we improve separation of concerns, maintaining and testability.|	<a href="adr/adr08.md">ADR08</a>|
+|08 |	Split Anonymization, AI tips and matching services |	Decouples Anonymization, AI tips and matching services, making the system simpler and easier to scale independently.  |	Requires coordination between services and careful orchestration of dependencies if they need to interact, adding complexity in integration. On the other hand we improve separation of concerns, maintaining and testability.|	<a href="adr/adr08.md">ADR08</a>|
 |09 	|Matching once per Job Ad deadline 	|Matches candidates once per job ad deadline, aligning with employer expectations and simplifying processing pipelines. |	Delays real-time candidate matching and feedback loops, making the system less responsive to changes in candidate or job availability during the job lifecycle. However, it dramatically reduces costs of processing. If needed, processing can be invoked through Matching API on demand.	|<a href="adr/adr09.md">ADR09</a>|
 |10 |	Configurable top N candidates for employers |	Allows employers to see the top N candidates, making "N" configurable, ensuring scalability and reducing DB overload. 	|Complexity in configuring "N" dynamically across jobs; potential risk if "N" is set too high or too low for specific job listings, affecting employer satisfaction.|<a href="adr/adr10.md">ADR10</a>|
 |11 |	Use lightweight authentication (OAuth2, Shiro) |	Implements simple and lightweight authentication to reduce complexity while securing access to services. |	May require upgrades to a more robust solution if security or user management needs increase, adding migration overhead later. 	|<a href="adr/adr11.md">ADR11</a>|
@@ -161,7 +174,47 @@ Sequence diagram:
 
 |ADR #| 	Title| 	Why |	Trade-offs 	| Link |
 |------|----------|-----|--------------|------|
-|08 |	Split AI tips and matching services |	Decouples AI tips and matching services, making the system simpler and easier to scale independently.  |	Requires coordination between services and careful orchestration of dependencies if they need to interact, adding complexity in integration. On the other hand we improve separation of concerns, maintaining and testability.|	<a href="adr/adr08.md">ADR08</a>|
+|08 |	Split Anonymization, AI tips and matching services |	Decouples Anonymization, AI tips and matching services, making the system simpler and easier to scale independently.  |	Requires coordination between services and careful orchestration of dependencies if they need to interact, adding complexity in integration. On the other hand we improve separation of concerns, maintaining and testability.|	<a href="adr/adr08.md">ADR08</a>|
+
+### Anonymization Service
+
+One of the core features of ClearView is its ability to **reduce bias** in the hiring process through the **anonymization of candidate resumes**. This feature ensures that employers focus on the skills and qualifications of candidates rather than on potentially bias-inducing personal information such as names, contact details, gender, or other identifiable attributes. The **Anonymization Service**, powered by **Large Language Models (LLMs)**, is a critical component in achieving this goal, enabling a fairer and more inclusive recruitment process.
+
+#### How the Anonymization Process Works
+
+1. **Candidate Submission**  
+   When a candidate submits their resume to ClearView, the resume typically contains personal and professional information, such as their full name, contact details, education, and work experience. This raw resume, while informative, carries the risk of introducing unconscious bias into the hiring process. 
+
+2. **Anonymization Service Powered by LLMs**  
+   Upon receiving the resume, ClearView’s **Anonymization Service** is automatically triggered. The service, utilizing **Large Language Models (LLMs)**, intelligently analyzes the resume to detect and anonymize sensitive personal information. These advanced models allow the system to:
+   - Identify personal identifiers such as **names**, **contact details**, **gender**, **date of birth**, and **photographs**, even if presented in varied formats or contexts.
+   - Maintain the **semantic integrity** of the resume, ensuring that anonymized resumes still convey the full scope of a candidate’s professional experience and skills.
+   
+   The LLM’s ability to understand context ensures that the anonymization process is thorough and adaptable, handling diverse resume formats and terminology with ease. While the LLM removes personal details, it preserves critical information such as **work experience**, **skills**, **education**, and **certifications**, ensuring that the anonymized resume remains informative.
+
+3. **Compelling Anonymized Resume Creation**  
+   The use of LLMs not only allows for effective anonymization but also enables the creation of a **compelling, professionally formatted anonymized resume**. The LLM enhances the presentation of the anonymized content by:
+   - **Reformatting** the candidate’s experience and skills to emphasize qualifications that are most relevant to the job posting.
+   - Ensuring a **consistent and polished presentation** across all anonymized resumes, so employers receive standardized resumes that focus solely on the candidates' qualifications.
+   - Adapting the text to maintain the **flow and coherence** of the resume, even after personal information has been removed, ensuring that it is easy for employers to read and evaluate.
+
+4. **Integration with Matching Data**  
+   After the anonymization process is complete, the resume is presented to employers alongside the **matching data** generated by ClearView’s skill-matching service. This includes a match score based on the candidate’s qualifications and how well they align with the job’s requirements. Employers, therefore, see only anonymized resumes and objective data, enabling them to make informed decisions without bias.
+
+#### Importance of LLM-Based Anonymization in Reducing Bias
+
+Using **LLM-powered anonymization** significantly enhances ClearView’s ability to reduce bias by:
+- **Contextual Understanding**: LLMs are capable of understanding the context in which personal details are presented, ensuring that all identifiable information is accurately removed while retaining important professional details.
+- **Eliminating Bias**: By stripping away personal identifiers, ClearView ensures that employers focus on **what matters most**—the candidate’s skills, qualifications, and experience—without being influenced by irrelevant details like name, gender, or ethnicity.
+- **Consistency Across Resumes**: LLMs enable the creation of **standardized anonymized resumes**, giving all candidates an equal opportunity to present themselves in the best possible light without the risk of bias creeping into the review process.
+
+<img src="diagrams/anonimization_service_process.png">
+
+
+#### Conclusion
+
+In ClearView, the **Anonymization Service**, powered by **LLMs**, plays a pivotal role in ensuring **fair and unbiased hiring practices**. By utilizing the capabilities of Large Language Models to intelligently anonymize resumes and generate a consistent, professional presentation, ClearView enables employers to make objective, data-driven decisions. The combination of LLM-powered anonymization and skill-matching data ensures that every candidate is evaluated based on their qualifications alone, fostering a more diverse and inclusive recruitment process.
+
 
 ### Matching service
 
@@ -451,6 +504,56 @@ Response: (200 OK)
   }
 ```
 
+Anonymized Resume Management
+Upload Anonimized Resume
+- POST /api/candidates/anonymized
+```
+Headers:
+Authorization: Bearer {token}
+Content-Type: multipart/form-data
+Request Body:
+- file: (binary)
+Response: (201 Created)
+```
+``` json
+  {
+    "id": "string",
+    "fileName": "string",
+    "uploadDate": "string (ISO 8601 date)",
+    "fileSize": "number"
+  }
+```
+
+Get Anonimized Resume
+- GET /api/candidates/anonimized
+```
+Headers:
+Authorization: Bearer {token}
+Response: (200 OK)
+```
+``` json
+  {
+    "id": "string",
+    "fileName": "string",
+    "uploadDate": "string (ISO 8601 date)",
+    "fileSize": "number",
+    "downloadUrl": "string"
+  }
+```
+
+Delete Anonimized Resume
+- DELETE /api/candidates/anonymized
+```
+Headers:
+Authorization: Bearer {token}
+Response: (200 OK)
+```
+``` json
+  {
+    "message": "Resume deleted successfully"
+  }
+```
+
 AI Tips
 Get Resume Tips
 - GET /api/candidates/resume/tips
@@ -646,6 +749,7 @@ POST /employer: Register a new employer and autofill company details.
 GET /employer/{id}: Retrieve employer details, including job ads and payment history.
 PUT /employer/{id}: Update employer information.
 DELETE /employer/{id}: Deactivate employer profile.
+GET /employer/{employer_id}/{candidate_id}/anonimized : Download anonymized candidate resume.
 GET /employer/{employer_id}/candidates/{candidate_id}/resume: Download unlocked candidate resume.
 ```
 - Job Ads:
@@ -856,9 +960,39 @@ This would allow us to keep related data in single schema and help us in future 
 |------|----------|-----|--------------|-----|	
 |06 |	Split database by schema to decouple domains and improve security|	Improves fault-tolerance and security by separating candidate, employer, matching, and analytics data into schemas. |	More complex database management, requiring careful handling of schema-specific optimizations and inter-schema queries. |	<a href="adr/adr06.md">ADR06</a>|
 
-### File Storage TODO!
+### File Storage
+
+ClearView is designed to reduce bias in the job application process by anonymizing resumes and matching candidates to job advertisements based on skills. One of the critical components of this system is the **file storage** mechanism, which is responsible for securely managing and storing candidate resumes and other file-based data.
+
+#### Why File Storage is Essential
+
+1. **Handling Unstructured Data**  
+   Resumes are a form of **unstructured data** that can come in a variety of formats, including PDFs, Word documents, and images. These files are an essential part of the candidate’s profile, as they contain detailed information about work experience, education, and skills. Storing and managing these files effectively is crucial for ensuring that ClearView can access and process candidate information accurately.
+
+2. **Resume Anonymization**  
+   A key feature of ClearView is the **anonymization** of resumes to eliminate potential bias in the hiring process. To achieve this, the system must be able to securely store both the original and anonymized versions of candidate resumes. File storage allows the system to manage different versions of these documents efficiently, ensuring that sensitive information is protected while providing anonymized versions for employer reviews.
+
+3. **Scalability and Efficiency**  
+   As the number of candidates and employers using ClearView grows, so does the volume of resumes and file-based data. A robust file storage system ensures that ClearView can **scale** to handle large amounts of data without performance degradation. Modern file storage solutions, such as **cloud-based storage** (e.g., AWS S3), offer flexible scalability, allowing ClearView to manage increasing data volumes while optimizing costs.
+
+4. **Security and Compliance**  
+   File storage is critical for maintaining the **security** of candidate information. Resumes often contain sensitive personal data, such as names, contact information, and employment history. A secure file storage system must provide encryption both at rest and in transit, ensuring that data is protected from unauthorized access. Additionally, file storage helps ClearView meet **compliance requirements** related to data protection laws, such as GDPR, by managing access controls and data retention policies.
+
+5. **Cost-Effectiveness**  
+   Managing file storage in a cost-effective manner is important to keep the system sustainable as it grows. Cloud-based storage solutions allow ClearView to pay for only the storage capacity it uses, offering **cost-efficiency** while ensuring high availability and durability of the data. By leveraging these storage solutions, ClearView minimizes the need for expensive on-premise infrastructure, reducing operational overhead.
+
+#### Conclusion
+
+In ClearView, file storage plays a pivotal role in securely managing candidate resumes, enabling resume anonymization, and ensuring scalability. It supports the system’s core mission of reducing bias in hiring by handling sensitive data efficiently and securely. As the system continues to evolve, having a robust and flexible file storage solution ensures that ClearView can grow while maintaining the integrity, security, and availability of its most important data: the candidate resumes.
+
+|ADR #| 	Title| 	Why |	Trade-offs 	| Link |
+|------|----------|-----|--------------|-----|
+|05 |	One relational database and one file-storage DB |	Simplifies maintenance by reducing the number of databases, combining multiple domains into one relational DB.| Resumes need separate file storage.	May compromise modularity and separation of concerns between domains, leading to potential scaling or data management challenges later. However big scalability is not expected so we feel comfortable in making this decision.	|<a href="adr/adr05.md">ADR05</a>|
 
 ## External services
+
+We have chosen to use **external services** for both **payment processing** and **survey management** in ClearView to reduce complexity and operational overhead. These services are well-established, secure, and scalable, allowing us to integrate reliable, out-of-the-box solutions that meet our current needs. By outsourcing these functionalities to trusted providers, we avoid the costs and time associated with building and maintaining custom systems. This decision allows ClearView to focus on its core functionalities, while ensuring that payments and surveys are handled efficiently and securely by specialized services.
+
 
 |ADR #| 	Title| 	Why |	Trade-offs 	| Link |
 |------|----------|-----|--------------|-----|		
@@ -866,8 +1000,15 @@ This would allow us to keep related data in single schema and help us in future 
 
 ## Additional considerations
 ### Evolvability
+
+While there is potential to add AI-driven features in the future, the exact nature and scope of these features are currently unclear, making it difficult to design a fully adaptable plugin system at this stage. However, by splitting concerns and decoupling core services—such as AI tips, anonymization, and matching—we are laying the groundwork for easier integration of new features when the need arises. This modular approach ensures that we can evolve and extend the system with minimal disruption, allowing us to introduce advanced capabilities as requirements become clearer.
+
 ### Scalability
+
+While ClearView does not expect to handle more than **5,000 active candidates** simultaneously (assumption confirmed by subject expert) in the near future, the current architecture is designed to be **scalable** enough to accommodate larger volumes of requests if necessary. By **separating the REST API from the backend services**, we have ensured that the system can scale flexibly based on demand. This separation allows us to independently scale critical components, such as the API layer or individual services like matching and anonymization, ensuring that performance remains consistent even as the user base grows.
+
 ### Business model (Premium)
-....
-## Appendix (additional materials, investigated options etc.)
+
+We are considering introducing a **Premium account** option for employers, which would unlock additional **AI-powered features** to enhance the hiring process. One such feature could be the use of **LLM-based matching** instead of the default **Cosine Similarity**. LLM matching, powered by advanced language models, could provide employers with **higher-quality candidate matches** by understanding the deeper context of job descriptions and resumes. However, running LLMs for matching is significantly more **costly** compared to Cosine Similarity, which is why we are exploring offering it as part of a premium service tier. This allows us to deliver enhanced functionality to employers who need it while keeping overall costs manageable for the system.
+
 
