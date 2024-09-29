@@ -13,14 +13,14 @@
 
 TODO:
 
-## Company overview (optional)
+## Company overview
 
 Diversity Cyber Council (https://www.diversitycybercouncil.com/) is a 501c3 Non-Profit that serves under-represented demographics in the tech industry by facilitating education, training, and staffing opportunities to establish a sustainable and diverse talent pipeline to the workforce.
 
 ## Requirements 
 
-High level requirements are listed in these documents:
-- https://docs.google.com/document/d/1jCHMAvgzqaYaAp09br12OC4ozpVXZR3s9ezgEqncZ9U/edit#heading=h.jsoimuz95gvo
+High level requirements are listed in this document:
+[Requirements](https://docs.google.com/document/d/1jCHMAvgzqaYaAp09br12OC4ozpVXZR3s9ezgEqncZ9U/edit#heading=h.jsoimuz95gvo)
 
 Additionally, through communication with stakeholders we found few other requirements:
 
@@ -29,7 +29,6 @@ Additionally, through communication with stakeholders we found few other require
 - There is a possibility of potential adding new AI features in the future, but it is not hard requirement.
 - System will be maintained by current Diversity Cyber Council IT team
 
-## Assumptions
 ## Identifying architecture characteristics 
 
 Taking into account all requirements we decided that 3 main characteristics for our solution should be: **Cost, Interoperability and Simplicity.**
@@ -48,13 +47,30 @@ There were other styles which could be also good options like microkernel, micro
 <img src="worksheets/architecture_styles.png">
 
 
-|ADR # |	Title |	Why |	Trade-offs |
-|------|----------|-----|--------------|	
-|01 |	Chosen architecture characteristics: cost, interoperability, simplicity, fault-tolerance, and evolvability |	Prioritized cost, interoperability, simplicity, fault-tolerance, and evolvability based on problem statement.| 	May require trade-offs between simplicity and evolvability over time, potentially limiting flexibility as requirements grow. |	
-|02 |	Service-Based Architecture selected	|Service-based architecture chosen to align with prioritized characteristics (cost, fault-tolerance, scalability).| 	Increased complexity in service orchestration and operational overhead compared to a monolithic approach. This level of complexity is needed to allow enough evolvability of system. Reduced scalability compared to microservices of event-driven architecture to optimize more for cost and expected scale.|	
+|ADR #| 	Title| 	Why |	Trade-offs 	| Link |
+|------|----------|-----|--------------|-----|	
+|01 |	Chosen architecture characteristics: cost, interoperability, simplicity, fault-tolerance, and evolvability |	Prioritized cost, interoperability, simplicity, fault-tolerance, and evolvability based on problem statement.| 	May require trade-offs between simplicity and evolvability over time, potentially limiting flexibility as requirements grow. |	<a href="adr/adr01.md">ADR01</a>|
+|02 |	Service-Based Architecture selected	|Service-based architecture chosen to align with prioritized characteristics (cost, fault-tolerance, scalability).| 	Increased complexity in service orchestration and operational overhead compared to a monolithic approach. This level of complexity is needed to allow enough evolvability of system.Reduced scalability compared to microservices of event-driven architecture to optimize more for cost and expected scale.| <a href="adr/adr02.md">ADR02</a>|
 
 
-## Domain analysis (ER diagram and schema partitioning and ADRs listed)
+## Domain analysis
+Before we defined components of the architecture we took a look at domain model to identify key domains which would help us in better organizing components and services in architecture.
+
+<img src ="diagrams/domain_model.png">
+
+We landed on next domains:
+- **Candidate** : Covering flow related to candidate: creating profile, uploading and iterating on resume, overview of matches.
+- **Employer** : Covering flow related to employer: creating profile, job, overview of matches, payment and download of full resumes.
+- **AI Backend** : Covers the AI part of the architecture: AI Tips and Matching service.
+- **Reporting**: Covering everything related to reports.
+- **Survey**: Surveys for Candidate and Employer.
+- **Administrator** : Admin flow covered.
+
+|ADR #| 	Title| 	Why |	Trade-offs 	| Link |
+|------|----------|-----|--------------|-------|	
+|03 |	Organize components per domain| 	Organizes ClearView components into domain-specific groups (candidate, employer, AI backend, etc.) to separate concerns effectively and improve maintainability and testability.|	Requires managing inter-domain communication and potentially increasing complexity if domains grow interdependent. 	| <a href="adr/adr03.md">ADR03</a>|
+
+
 ## Architecture
 ### Top level architecture 
 
@@ -84,31 +100,216 @@ files.
 - External services (Payment processor and Survey Provider)
 
 
-#### Architecture Decision Records
+### Architecture Decision Records
 
 Here is the list of all ADRs we made during the process to came up with architecture we designed. Full ADRs can be found through links in the table.
 
 
-|ADR #| 	Title| 	Why |	Trade-offs 	|
-|------|----------|-----|--------------|	
-|01 |	Chosen architecture characteristics: cost, interoperability, simplicity, fault-tolerance, and evolvability |	Prioritized cost, interoperability, simplicity, fault-tolerance, and evolvability based on problem statement.| 	May require trade-offs between simplicity and evolvability over time, potentially limiting flexibility as requirements grow. |	
-|02 |	Service-Based Architecture selected	|Service-based architecture chosen to align with prioritized characteristics (cost, fault-tolerance, scalability).| 	Increased complexity in service orchestration and operational overhead compared to a monolithic approach. This level of complexity is needed to allow enough evolvability of system.Reduced scalability compared to microservices of event-driven architecture to optimize more for cost and expected scale.|		
-|03 |	One REST API with multiple endpoints |	Simplifies architecture by having a single API with various endpoints for different functionalities. |	Can lead to large, complex APIs over time, making it harder to maintain clear boundaries between services.Reducing number of REST API services to one instead of multiple (one for each domain).	|
-|04 |	One relational database and one file-storage DB |	Simplifies maintenance by reducing the number of databases, combining multiple domains into one relational DB.| Resumes need separate file storage.	May compromise modularity and separation of concerns between domains, leading to potential scaling or data management challenges later. However big scalability is not expected so we feel comfortable in making this decision.	|
-|05 |	Organize components per domain| 	Organizes ClearView components into domain-specific groups (candidate, employer, matching, etc.) to separate concerns effectively and improve maintainability and testability.|	Requires managing inter-domain communication and potentially increasing complexity if domains grow interdependent. 	|
-|06 |	Split database by schema to decouple domains and improve security|	Improves fault-tolerance and security by separating candidate, employer, matching, and analytics data into schemas. |	More complex database management, requiring careful handling of schema-specific optimizations and inter-schema queries. |	
-|07 |	Analytics as part of regular database| 	Simplifies architecture by embedding analytics within the regular database, avoiding real-time analytics complexity. |	May limit future analytics capabilities if real-time or advanced analytics are needed, and could add extra load to the operational database. However, it should be fairly easy to move this data to separate database if needed.|	
-|08 |	Split AI tips and matching services |	Decouples AI tips and matching services, making the system simpler and easier to scale independently.  |	Requires coordination between services and careful orchestration of dependencies if they need to interact, adding complexity in integration. On the other hand we improve separation of concerns, maintaining and testability.|	
-|09 	|Matching once per Job Ad deadline 	|Matches candidates once per job ad deadline, aligning with employer expectations and simplifying processing pipelines. |	Delays real-time candidate matching and feedback loops, making the system less responsive to changes in candidate or job availability during the job lifecycle. However, it dramatically reduces costs of processing. If needed, processing can be invoked through Matching API on demand.	|
-|10 |	Configurable top N candidates for employers |	Allows employers to see the top N candidates, making "N" configurable, ensuring scalability and reducing DB overload. 	|Complexity in configuring "N" dynamically across jobs; potential risk if "N" is set too high or too low for specific job listings, affecting employer satisfaction.|
-|11 |	Use lightweight authentication (OAuth2, Shiro) |	Implements simple and lightweight authentication to reduce complexity while securing access to services. |	May require upgrades to a more robust solution if security or user management needs increase, adding migration overhead later. 	|
+|ADR #| 	Title| 	Why |	Trade-offs 	| Link |
+|------|----------|-----|--------------|-----|	
+|01 |	Chosen architecture characteristics: cost, interoperability, simplicity, fault-tolerance, and evolvability |	Prioritized cost, interoperability, simplicity, fault-tolerance, and evolvability based on problem statement.| 	May require trade-offs between simplicity and evolvability over time, potentially limiting flexibility as requirements grow. |	<a href="adr/adr01.md">ADR01</a>|
+|02 |	Service-Based Architecture selected	|Service-based architecture chosen to align with prioritized characteristics (cost, fault-tolerance, scalability).| 	Increased complexity in service orchestration and operational overhead compared to a monolithic approach. This level of complexity is needed to allow enough evolvability of system.Reduced scalability compared to microservices of event-driven architecture to optimize more for cost and expected scale.| <a href="adr/adr02.md">ADR02</a>|
+|03 |	Organize components per domain| 	Organizes ClearView components into domain-specific groups (candidate, employer, matching, etc.) to separate concerns effectively and improve maintainability and testability.|	Requires managing inter-domain communication and potentially increasing complexity if domains grow interdependent. 	|	<a href="adr/adr03.md">ADR03</a>|
+|04 |	One REST API with multiple endpoints |	Simplifies architecture by having a single API with various endpoints for different functionalities. |	Can lead to large, complex APIs over time, making it harder to maintain clear boundaries between services.Reducing number of REST API services to one instead of multiple (one for each domain).	|<a href="adr/adr04.md">ADR04</a>|
+|05 |	One relational database and one file-storage DB |	Simplifies maintenance by reducing the number of databases, combining multiple domains into one relational DB.| Resumes need separate file storage.	May compromise modularity and separation of concerns between domains, leading to potential scaling or data management challenges later. However big scalability is not expected so we feel comfortable in making this decision.	|<a href="adr/adr05.md">ADR05</a>|
+|06 |	Split database by schema to decouple domains and improve security|	Improves fault-tolerance and security by separating candidate, employer, matching, and analytics data into schemas. |	More complex database management, requiring careful handling of schema-specific optimizations and inter-schema queries. |	<a href="adr/adr06.md">ADR06</a>|
+|07 |	Analytics as part of regular database| 	Simplifies architecture by embedding analytics within the regular database, avoiding real-time analytics complexity. |	May limit future analytics capabilities if real-time or advanced analytics are needed, and could add extra load to the operational database. However, it should be fairly easy to move this data to separate database if needed.|	<a href="adr/adr07.md">ADR07</a>|
+|08 |	Split AI tips and matching services |	Decouples AI tips and matching services, making the system simpler and easier to scale independently.  |	Requires coordination between services and careful orchestration of dependencies if they need to interact, adding complexity in integration. On the other hand we improve separation of concerns, maintaining and testability.|	<a href="adr/adr08.md">ADR08</a>|
+|09 	|Matching once per Job Ad deadline 	|Matches candidates once per job ad deadline, aligning with employer expectations and simplifying processing pipelines. |	Delays real-time candidate matching and feedback loops, making the system less responsive to changes in candidate or job availability during the job lifecycle. However, it dramatically reduces costs of processing. If needed, processing can be invoked through Matching API on demand.	|<a href="adr/adr09.md">ADR09</a>|
+|10 |	Configurable top N candidates for employers |	Allows employers to see the top N candidates, making "N" configurable, ensuring scalability and reducing DB overload. 	|Complexity in configuring "N" dynamically across jobs; potential risk if "N" is set too high or too low for specific job listings, affecting employer satisfaction.|<a href="adr/adr10.md">ADR10</a>|
+|11 |	Use lightweight authentication (OAuth2, Shiro) |	Implements simple and lightweight authentication to reduce complexity while securing access to services. |	May require upgrades to a more robust solution if security or user management needs increase, adding migration overhead later. 	|<a href="adr/adr11.md">ADR11</a>|
+| 12 | Use Third party solution for Survey and Payment | There are good existing solutions for this problem so we can reuse and reduce costs. | Hard to customize and extend, but no maintenance and cost is low. |<a href="adr/adr12.md">ADR12</a>|
+| 13  | Use Cosine Similarity for Initial Matching  | Cost-efficient and predictable for initial implementation, with flexibility for future LLM integration.        | Limited contextual understanding and potential costs when switching to LLM-based models in the future. |<a href="adr/adr13.md">ADR13</a>|
+
+## AI Backend
+
+### AI Tips service
+
+Tips are generated based on uploaded resume, with a goal to improve quality of it and help candidate in finding a job.
+This will be achieved through improvements in:
+- Quantifying results
+- Performance focus evaluation
+- Skill Level Estimation - this will also help our skill extraction system
+- Language Enhancement and Clarification**
+- Formatting Suggestions
+and many others
+
+Flow diagram:
+
+<img src="diagrams/aitips_flow_diagram.png">
+
+Sequence diagram:
+
+<img src="diagrams/aitips_sequence_diagram.png">
+
+**Analysis of LLM Usage for AI-Tips**
+
+**Pros:**
+
+- Advanced language understanding: LLMs can comprehend complex resume structures and extract relevant information accurately.
+- Contextual awareness: LLMs can provide suggestions based on industry standards, job market trends, and best practices in resume writing.
+- Flexibility: LLMs can adapt to various resume formats and styles without requiring specific templates.
+- Continuous improvement: As LLMs are updated, the quality of suggestions can improve without significant changes to the system architecture.
+- Multilingual support: LLMs can potentially provide tips for resumes in multiple languages.
+
+**Cons:**
+- Computational cost: Processing resumes through LLMs can be resource-intensive and potentially expensive, especially for large volumes of requests.
+- Latency: The time required to generate suggestions using LLMs might be higher compared to rule-based systems, potentially affecting user experience.
+- Inconsistency: LLMs may sometimes produce inconsistent or irrelevant suggestions, requiring additional validation or filtering mechanisms.
+
+**Related ADRs**
+
+|ADR #| 	Title| 	Why |	Trade-offs 	| Link |
+|------|----------|-----|--------------|------|
+|08 |	Split AI tips and matching services |	Decouples AI tips and matching services, making the system simpler and easier to scale independently.  |	Requires coordination between services and careful orchestration of dependencies if they need to interact, adding complexity in integration. On the other hand we improve separation of concerns, maintaining and testability.|	<a href="adr/adr08.md">ADR08</a>|
+
+### Matching service
+
+The Matching Service in ClearView is designed to process candidate resumes and job advertisements to extract skills and match them, providing a score that indicates the suitability of a candidate for a job. The service is built with flexibility in mind, using **Cosine Similarity** as the default matching algorithm, but allowing for other strategies such as **LLM-based matching** if needed.
+
+<img src="diagrams/matching_service_diagram.png">
+
+**Matching REST Endpoint:** The main entry point to the Matching Service. It provides methods to:
+```
+extractJobSkills(jobAdId)
+
+extractCandidateSkills(candidateId)
+
+getAllMatchingData(jobAdId)
+
+getMatchingData(candidateId, jobAdId)
+```
+**Skill Extraction:** This component takes resumes and job descriptions and extracts skills from them. These skills are stored in the ClearView database for future use in matching.
+
+**AI Skill Matching:** This component compares candidate skills with job ad skills using Cosine Similarity as the default algorithm. The system calculates a matching score (1-100%) based on the similarity of the skills.
+
+#### Triggering
+Matching is done per job advertisement once it is closed to optimize cost. It could be also triggered on demand if business needs are such. We want to avoid multiple passes and redundant processes this way. 
+
+|ADR #| 	Title| 	Why |	Trade-offs 	| Link |
+|------|----------|-----|--------------|------|
+|09 	|Matching once per Job Ad deadline 	|Matches candidates once per job ad deadline, aligning with employer expectations and simplifying processing pipelines. |	Delays real-time candidate matching and feedback loops, making the system less responsive to changes in candidate or job availability during the job lifecycle. However, it dramatically reduces costs of processing. If needed, processing can be invoked through Matching API on demand.	|<a href="adr/adr09.md">ADR09</a>|
+
+#### Matching Process
+
+Matching is done for a job in a loop for all candidates . Process for single candidate is depicted on flowchart below.
+
+<img src="diagrams/matching_process.png">
+
+- Get Candidate Skills: Fetch the extracted skills for a candidate based on their CandidateId. Output is a map of skills.
+Example:
+``` {Java: Expert, Python: Intermediate}```
+
+- Get Job for Candidate: Retrieve the list of jobs that the candidate applied to. The job data includes the job requirements and expected skills.
+- Get Job Skills: Extract the required skills for the job from the JobAdId. Output is a map of skills.
+Example: ```{Java: Expert, SQL: Intermediate}```
+
+- Score Candidate Job Match: Compare the candidate’s skills with the job’s required skills. Use Cosine Similarity to compute a score (1-100%) that represents the candidate’s fit for the job.
+- Store Matching Score: Save the calculated score in the database, linking the CandidateId, JobAdId, and the score.
+Example: ```{CandidateId: 123, JobAdId: 456, Score: 85} ```
+
+#### Skill Extraction
+
+Skill extraction is triggered before matching to gather required skills from job add and candidate skills from resume.
+Extraction needs to be done using AI model, in our case LLM which transforms resume or add into map of skill descriptions.
+
+Example :
+``` json
+{ 
+    "Java": "Expert", 
+    "SQL": "Intermediate", 
+}
+```
+
+<img src="diagrams/skill_extraction_diagram.png">
+
+Class diagram
+
+<img src="diagrams/skill_extraction_classes.png">
 
 
+#### Scoring Logic
+Scoring candidates against job ads is a complex task, with many potential approaches. Given ClearView’s emphasis on cost-efficiency, we favor solutions that are cost-effective while providing the flexibility to adopt different strategies.
+
+**Cosine Similarity:**
+
+Advantages:
+- Low cost to run and implement.
+- Predictable and reliable with consistent performance.
+- Provides good latency and scalability for real-time processing.
+
+Disadvantages:
+- Limited understanding of nuanced relationships between skills.
+
+**LLM Similarity:**
+
+Advantages:
+- Can capture more complex relationships between skills and job requirements (e.g., inferred skills, context).
+Disadvantages:
+- Expensive to run and can introduce latency.
+- May “hallucinate” results and lack reliability in some cases.
+
+Decision:
+
+For the initial implementation, **Cosine Similarity** will be used due to its cost-efficiency and predictability. However, the system will be designed to support alternative matching strategies such as **LLM-based matching**. This flexibility will allow us to switch or enhance the matching logic as the system evolves.
+
+
+| ADR # |Title| 	Why |	Trade-offs 	| Link |
+|------|----------|-----|--------------|-----|	
+| 13  | Use Cosine Similarity for Initial Matching  | Cost-efficient and predictable for initial implementation, with flexibility for future LLM integration.        | Limited contextual understanding and potential costs when switching to LLM-based models in the future. |<a href="adr/adr13.md">ADR13</a>|
+
+Here is a class diagram representing the Scoring Logic using the Strategy Pattern for implementing both LLM Strategy and Cosine Similarity Strategy.
+
+<img src="diagrams/matching_strategies.png">
+
+Explanation:
+
+- MatchingContext: This class represents the context in which different matching strategies (Cosine Similarity or LLM) can be applied. It has:
+    - A method ```setStrategy(MatchingStrategy)``` to set the desired strategy (either Cosine Similarity or LLM).
+    - A method ```executeStrategy(candidateSkills, jobSkills)``` to invoke the strategy's scoring logic with the candidate's skills and the job's required skills.
+- MatchingStrategy: This is an interface that defines the common method ```score(candidateSkills, jobSkills)```, which both strategies must implement. 
+- CosineSimilarityStrategy: Implements the ```MatchingStrategy``` interface, providing a specific implementation of ```score()``` using Cosine Similarity to compare the candidate's skills and the job's required skills.
+- LLMStrategy: Also implements the ```MatchingStrategy``` interface, but the ```score()``` method uses LLM-based logic to match the skills.
+
+**Potential Improvement - Hybrid Matching: Cosine + LLM**
+
+In case we figure out that Cosine Similarity is not producing good enough results, but we cannot switch directly to LLM because it would be to costly to run LLM over entire database, we could do hybrid solution. Idea is to filter out first set of candidates using Cosine Similarity and then use fine grained matching using LLM on top X matches. This way we would reduce costs but still have higher quality matches.
+
+Process is depicted in the flowchart below.
+
+<img src="diagrams/matching_improved_process.png">
+
+
+
+## Integration
+
+This diagram shows larger picture how ClearView integrates with other systems like payment and HR system.
+
+We will use third party Payment processor, so much of complexity is solved there automatically. However we need to take care of tracking payment and only then allowing access to resumes.
+
+For HR integration we offer using ClearView app to access Employer pages. However it will be possible to integrate using REST API as well.
+
+<img src="diagrams/clearview_integration_diagram.png">
+
+|ADR #| 	Title| 	Why |	Trade-offs 	| Link |
+|------|----------|-----|--------------|-----|			
+|04 |	One REST API with multiple endpoints |	Simplifies architecture by having a single API with various endpoints for different functionalities. |	Can lead to large, complex APIs over time, making it harder to maintain clear boundaries between services.Reducing number of REST API services to one instead of multiple (one for each domain).	|<a href="adr/adr04.md">ADR04</a>|
+| 12 | Use Third party solution for Survey and Payment | There are good existing solutions for this problem so we can reuse and reduce costs. | Hard to customize and extend, but no maintenance and cost is low. |<a href="adr/adr12.md">ADR12</a>|
+
+## REST API
 ### Candidate Endpoint
 
 Subset of domain model used for Candidate Endpoints:
 
 <img src="diagrams/candidate_class_diagram.png">
+
+**Related ADRs**
+
+|ADR #| 	Title| 	Why |	Trade-offs 	| Link |
+|------|----------|-----|--------------|-----|			
+|03 |	Organize components per domain| 	Organizes ClearView components into domain-specific groups (candidate, employer, matching, etc.) to separate concerns effectively and improve maintainability and testability.|	Requires managing inter-domain communication and potentially increasing complexity if domains grow interdependent. 	|	<a href="adr/adr03.md">ADR03</a>|
+|04 |	One REST API with multiple endpoints |	Simplifies architecture by having a single API with various endpoints for different functionalities. |	Can lead to large, complex APIs over time, making it harder to maintain clear boundaries between services.Reducing number of REST API services to one instead of multiple (one for each domain).	|<a href="adr/adr04.md">ADR04</a>|
+
 
 #### Account Management
 Register Candidate
@@ -386,7 +587,6 @@ Response: (201 Created)
     "status": "string"
   }
 ```
-
 ### Employer Endpoint
 
 #### 1. Overview
@@ -399,6 +599,14 @@ Tracking employer activity, including interviews and candidate progression.
 This solution will involve a set of REST API CRUD operations, a payment gateway integration, and the necessary database structure to manage the employer's data, payment records, and job posting history.
 
 <img src="diagrams/employer_diagram.png">
+
+**Related ADRs**
+
+|ADR #| 	Title| 	Why |	Trade-offs 	| Link |
+|------|----------|-----|--------------|-----|			
+|03 |	Organize components per domain| 	Organizes ClearView components into domain-specific groups (candidate, employer, matching, etc.) to separate concerns effectively and improve maintainability and testability.|	Requires managing inter-domain communication and potentially increasing complexity if domains grow interdependent. 	|	<a href="adr/adr03.md">ADR03</a>|
+|04 |	One REST API with multiple endpoints |	Simplifies architecture by having a single API with various endpoints for different functionalities. |	Can lead to large, complex APIs over time, making it harder to maintain clear boundaries between services.Reducing number of REST API services to one instead of multiple (one for each domain).	|<a href="adr/adr04.md">ADR04</a>|
+
 
 #### 2. Employer Registration and Management
 The Employer system will handle the following:
@@ -465,7 +673,14 @@ GET /employer/{id}/hr-sync: Synchronize job ads with HR system.
 #### Administrator Endpoint Overview
 The Administrator Endpoint is designed to provide system administrators with special privileges for managing users, candidates, employers, and the skill-matching configuration. This includes the ability to update hire statuses, modify user data, and change the matching strategy (e.g., switch between Cosine Similarity and LLM-based matching).
 
-##### Administrator Endpoint Methods
+**Related ADRs**
+
+|ADR #| 	Title| 	Why |	Trade-offs 	| Link |
+|------|----------|-----|--------------|-----|			
+|03 |	Organize components per domain| 	Organizes ClearView components into domain-specific groups (candidate, employer, matching, etc.) to separate concerns effectively and improve maintainability and testability.|	Requires managing inter-domain communication and potentially increasing complexity if domains grow interdependent. 	|	<a href="adr/adr03.md">ADR03</a>|
+|04 |	One REST API with multiple endpoints |	Simplifies architecture by having a single API with various endpoints for different functionalities. |	Can lead to large, complex APIs over time, making it harder to maintain clear boundaries between services.Reducing number of REST API services to one instead of multiple (one for each domain).	|<a href="adr/adr04.md">ADR04</a>|
+
+**Administrator Endpoint Methods**
 
 **updateCandidateHireStatus:**
 
@@ -608,167 +823,51 @@ How It Works:
 - **MatchingService:** Admins can change the skill-matching strategy (e.g., switch between Cosine Similarity and LLM).
 - **User:** Admins can update general user data for both candidates and employers.
 
-### AI Tips service
 
-Tips are generated based on uploaded resume, with a goal to improve quality of it and help candidate in finding a job.
-This will be achieved through improvements in:
-- Quantifying results
-- Performance focus evaluation
-- Skill Level Estimation - this will also help our skill extraction system
-- Language Enhancement and Clarification**
-- Formatting Suggestions
-and many others
-
-Flow diagram:
-
-<img src="diagrams/aitips_flow_diagram.png">
-
-Sequence diagram:
-
-<img src="diagrams/aitips_sequence_diagram.png">
-
-**Analysis of LLM Usage for AI-Tips**
-
-**Pros:**
-
-- Advanced language understanding: LLMs can comprehend complex resume structures and extract relevant information accurately.
-- Contextual awareness: LLMs can provide suggestions based on industry standards, job market trends, and best practices in resume writing.
-- Flexibility: LLMs can adapt to various resume formats and styles without requiring specific templates.
-- Continuous improvement: As LLMs are updated, the quality of suggestions can improve without significant changes to the system architecture.
-- Multilingual support: LLMs can potentially provide tips for resumes in multiple languages.
-
-**Cons:**
-- Computational cost: Processing resumes through LLMs can be resource-intensive and potentially expensive, especially for large volumes of requests.
-- Latency: The time required to generate suggestions using LLMs might be higher compared to rule-based systems, potentially affecting user experience.
-- Inconsistency: LLMs may sometimes produce inconsistent or irrelevant suggestions, requiring additional validation or filtering mechanisms.
-
-**Related ADRs**
-
-|ADR #| 	Title| 	Why |	Trade-offs 	|
-|------|----------|-----|--------------|
-|08 |	Split AI tips and matching services |	Decouples AI tips and matching services, making the system simpler and easier to scale independently.  |	Requires coordination between services and careful orchestration of dependencies if they need to interact, adding complexity in integration. On the other hand we improve separation of concerns, maintaining and testability.|	
-
-### Matching service
-
-The Matching Service in ClearView is designed to process candidate resumes and job advertisements to extract skills and match them, providing a score that indicates the suitability of a candidate for a job. The service is built with flexibility in mind, using **Cosine Similarity** as the default matching algorithm, but allowing for other strategies such as **LLM-based matching** if needed.
-
-<img src="diagrams/matching_service_diagram.png">
-
-**Matching REST Endpoint:** The main entry point to the Matching Service. It provides methods to:
-```
-extractJobSkills(jobAdId)
-
-extractCandidateSkills(candidateId)
-
-getAllMatchingData(jobAdId)
-
-getMatchingData(candidateId, jobAdId)
-```
-**Skill Extraction:** This component takes resumes and job descriptions and extracts skills from them. These skills are stored in the ClearView database for future use in matching.
-
-**AI Skill Matching:** This component compares candidate skills with job ad skills using Cosine Similarity as the default algorithm. The system calculates a matching score (1-100%) based on the similarity of the skills.
-
-#### Triggering
-Matching is done per job advertisement once it is closed to optimize cost. It could be also triggered on demand if business needs are such. We want to avoid multiple passes and redundant processes this way. 
-
-#### Matching Process
-
-Matching is done for a job in a loop for all candidates . Process for single candidate is depicted on flowchart below.
-
-<img src="diagrams/matching_process.png">
-
-- Get Candidate Skills: Fetch the extracted skills for a candidate based on their CandidateId. Output is a map of skills.
-Example:
-``` {Java: Expert, Python: Intermediate}```
-
-- Get Job for Candidate: Retrieve the list of jobs that the candidate applied to. The job data includes the job requirements and expected skills.
-- Get Job Skills: Extract the required skills for the job from the JobAdId. Output is a map of skills.
-Example: ```{Java: Expert, SQL: Intermediate}```
-
-- Score Candidate Job Match: Compare the candidate’s skills with the job’s required skills. Use Cosine Similarity to compute a score (1-100%) that represents the candidate’s fit for the job.
-- Store Matching Score: Save the calculated score in the database, linking the CandidateId, JobAdId, and the score.
-Example: ```{CandidateId: 123, JobAdId: 456, Score: 85} ```
-
-#### Skill Extraction
-
-Skill extraction is triggered before matching to gather required skills from job add and candidate skills from resume.
-Extraction needs to be done using AI model, in our case LLM which transforms resume or add into map of skill descriptions.
-
-Example :
-``` json
-{ 
-    "Java": "Expert", 
-    "SQL": "Intermediate", 
-}
-```
-
-<img src="diagrams/skill_extraction_diagram.png">
-
-Class diagram
-
-<img src="diagrams/skill_extraction_classes.png">
-
-
-#### Scoring Logic
-Scoring candidates against job ads is a complex task, with many potential approaches. Given ClearView’s emphasis on cost-efficiency, we favor solutions that are cost-effective while providing the flexibility to adopt different strategies.
-
-**Cosine Similarity:**
-
-Advantages:
-- Low cost to run and implement.
-- Predictable and reliable with consistent performance.
-- Provides good latency and scalability for real-time processing.
-
-Disadvantages:
-- Limited understanding of nuanced relationships between skills.
-
-**LLM Similarity:**
-
-Advantages:
-- Can capture more complex relationships between skills and job requirements (e.g., inferred skills, context).
-Disadvantages:
-- Expensive to run and can introduce latency.
-- May “hallucinate” results and lack reliability in some cases.
-
-Decision:
-
-For the initial implementation, **Cosine Similarity** will be used due to its cost-efficiency and predictability. However, the system will be designed to support alternative matching strategies such as **LLM-based matching**. This flexibility will allow us to switch or enhance the matching logic as the system evolves.
-
-Here is a class diagram representing the Scoring Logic using the Strategy Pattern for implementing both LLM Strategy and Cosine Similarity Strategy.
-
-<img src="diagrams/matching_strategies.png">
-
-Explanation:
-
-- MatchingContext: This class represents the context in which different matching strategies (Cosine Similarity or LLM) can be applied. It has:
-    - A method ```setStrategy(MatchingStrategy)``` to set the desired strategy (either Cosine Similarity or LLM).
-    - A method ```executeStrategy(candidateSkills, jobSkills)``` to invoke the strategy's scoring logic with the candidate's skills and the job's required skills.
-- MatchingStrategy: This is an interface that defines the common method ```score(candidateSkills, jobSkills)```, which both strategies must implement. 
-- CosineSimilarityStrategy: Implements the ```MatchingStrategy``` interface, providing a specific implementation of ```score()``` using Cosine Similarity to compare the candidate's skills and the job's required skills.
-- LLMStrategy: Also implements the ```MatchingStrategy``` interface, but the ```score()``` method uses LLM-based logic to match the skills.
-
-**Potential Improvement - Hybrid Matching: Cosine + LLM**
-
-In case we figure out that Cosine Similarity is not producing good enough results, but we cannot switch directly to LLM because it would be to costly to run LLM over entire database, we could do hybrid solution. Idea is to filter out first set of candidates using Cosine Similarity and then use fine grained matching using LLM on top X matches. This way we would reduce costs but still have higher quality matches.
-
-Process is depicted in the flowchart below.
-
-<img src="diagrams/matching_improved_process.png">
-
-
+## Storage
 ### Database
-### ER diagram
+
+Based on domain we modeled this is the database structure we designed.
+
+<img src="diagrams/ER_diagram.png">
+
+|ADR #| 	Title| 	Why |	Trade-offs 	| Link |
+|------|----------|-----|--------------|-----|	
+|05 |	One relational database and one file-storage DB |	Simplifies maintenance by reducing the number of databases, combining multiple domains into one relational DB.| Resumes need separate file storage.	May compromise modularity and separation of concerns between domains, leading to potential scaling or data management challenges later. However big scalability is not expected so we feel comfortable in making this decision.	|<a href="adr/adr05.md">ADR05</a>|
+|06 |	Split database by schema to decouple domains and improve security|	Improves fault-tolerance and security by separating candidate, employer, matching, and analytics data into schemas. |	More complex database management, requiring careful handling of schema-specific optimizations and inter-schema queries. |	<a href="adr/adr06.md">ADR06</a>|
+|07 |	Analytics as part of regular database| 	Simplifies architecture by embedding analytics within the regular database, avoiding real-time analytics complexity. |	May limit future analytics capabilities if real-time or advanced analytics are needed, and could add extra load to the operational database. However, it should be fairly easy to move this data to separate database if needed.|	<a href="adr/adr07.md">ADR07</a>|
+
 ### Schema considerations
-### File Storage
-### External services
-### Payment processor
-ADR and decision
-### Survey
-ADR and decision
-### Additional considerations
-#### Evolvability
-#### Scalability
-#### Business model (Premium)
+
+To improve security of data and potential componentization in future, we propose separating data in different schemas.
+
+One of main concerns is that Employer flow should not access Candidate data, so we want to keep this separately.
+
+Idea is to have next schemas:
+
+- Candidate
+- Employer
+- Matching
+- Reporting
+
+This would allow us to keep related data in single schema and help us in future potential separation of databases. It increases security as well by making it harder to access unwanted data.
+
+|ADR #| 	Title| 	Why |	Trade-offs 	| Link |
+|------|----------|-----|--------------|-----|	
+|06 |	Split database by schema to decouple domains and improve security|	Improves fault-tolerance and security by separating candidate, employer, matching, and analytics data into schemas. |	More complex database management, requiring careful handling of schema-specific optimizations and inter-schema queries. |	<a href="adr/adr06.md">ADR06</a>|
+
+### File Storage TODO!
+
+## External services
+
+|ADR #| 	Title| 	Why |	Trade-offs 	| Link |
+|------|----------|-----|--------------|-----|		
+| 12 | Use Third party solution for Survey and Payment | There are good existing solutions for this problem so we can reuse and reduce costs. | Hard to customize and extend, but no maintenance and cost is low. |<a href="adr/adr12.md">ADR12</a>|
+
+## Additional considerations
+### Evolvability
+### Scalability
+### Business model (Premium)
 ....
-### Appendix (additional materials, investigated options etc.)
+## Appendix (additional materials, investigated options etc.)
 
