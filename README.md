@@ -381,8 +381,9 @@ Subset of domain model used for Candidate Endpoints:
 #### Account Management
 Register Candidate
 - POST /api/candidates/register
-``` json
+
 Request Body:
+``` json
   {
     "email": "string",
     "password": "string",
@@ -406,8 +407,8 @@ Response: (201 Created)
 
 Login Candidate
 - POST /api/candidates/login
-``` json
 Request Body:
+``` json
   {
     "email": "string",
     "password": "string"
@@ -817,7 +818,7 @@ status: The new hire status (`hired`, rejected, pending).
 ```
 Response: 
 ```json 
-{success: true, message: "Candidate hire status updated"}
+{"success": true, "message": "Candidate hire status updated"}
  ```
 
 Example Usage:
@@ -842,7 +843,7 @@ data: A JSON object containing the updated user data (e.g., name, email, etc.).
 ```
 Response: 
 ``` json
-{success: true, message: "User data updated"}
+{"success": true, "message": "User data updated"}
 ```
 
 Example Usage:
@@ -870,7 +871,7 @@ data: A JSON object containing the updated candidate data (e.g., skills, resume,
 ```
 Response: 
 ``` json
-{success: true, message: "Candidate data updated"}
+{"success": true, "message": "Candidate data updated"}
 ```
 
 Example Usage:
@@ -898,7 +899,7 @@ data: A JSON object containing the updated employer data (e.g., company name, jo
 ```
 Response: 
 ``` json
-{success: true, message: "Employer data updated"}
+{"success": true, "message": "Employer data updated"}
 ```
 
 Example Usage:
@@ -925,7 +926,7 @@ strategy: The new matching strategy (`cosineSimilarity` or LLM).
 ```
 Response: 
 ``` json
-{success: true, message: "Matching strategy updated"}
+{"success": true, "message": "Matching strategy updated"}
 ```
 
 Example Usage:
