@@ -822,9 +822,11 @@ Response:
  ```
 
 Example Usage:
-``` json
+```
    PUT /api/admin/updateCandidateHireStatus
-   Body:
+```
+Body:
+``` json
    {
      "candidateId": "123",
      "jobAdId": "456",
@@ -847,10 +849,11 @@ Response:
 ```
 
 Example Usage:
-
-``` json
+```
    PUT /api/admin/updateUser
-   Body:
+```
+Body:
+``` json
    {
      "userId": "789",
      "data": {
@@ -875,9 +878,11 @@ Response:
 ```
 
 Example Usage:
-``` json
+```
    PUT /api/admin/updateCandidate
-   Body:
+```
+Body:
+``` json
    {
      "candidateId": "123",
      "data": {
@@ -930,9 +935,11 @@ Response:
 ```
 
 Example Usage:
-``` json
+```
    PUT /api/admin/updateMatchingStrategyConfig
-   Body:
+```
+Body:
+``` json
    {
      "strategy": "cosineSimilarity"
    }
