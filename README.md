@@ -908,10 +908,11 @@ Response:
 ```
 
 Example Usage:
-
-``` json
+```
    PUT /api/admin/updateEmployer
-   Body:
+```
+Body:
+``` json
    {
      "employerId": "456",
      "data": {
