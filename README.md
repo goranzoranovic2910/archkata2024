@@ -81,7 +81,51 @@ There were other styles which could be also good options like microkernel, micro
 ## Domain analysis
 Before we defined components of the architecture we took a look at domain model to identify key domains which would help us in better organizing components and services in architecture.
 
-<img src ="diagrams/domain_model.png">
+``` mermaid
+classDiagram
+    %% Customer Group
+    class Candidate
+    class Resume
+    class Tip
+    class Job
+
+    %% Candidate and Company Group
+    class Skill
+
+    %% Company Group
+    class Company
+    class Matching
+
+    %% Administration Group
+    class Payment
+
+    %% Reporting Group
+    class BusinessReport
+    class ServiceReport
+
+    %% Surveys Group
+    class Survey
+
+    %% Relationships
+    Candidate "1" -- "0..1" Resume : has
+    Resume "1" -- "*" Tip : has
+    
+    
+    Candidate "1" -- "*" Skill : possesses
+    
+    Company "1" -- "*" Job : posts
+    Job "1" -- "*" Skill : requires
+    Company "1" -- "*" Matching : uses
+    Candidate "1" -- "*" Matching : participates in
+    Job "1" -- "*" Matching : involved in
+    Company "1" -- "*" Payment : makes
+    Payment "1" -- "1" Resume : unlocks
+    BusinessReport "1" -- "*" Company : analyzes
+    ServiceReport "1" -- "*" Candidate : analyzes
+    ServiceReport "1" -- "*" Company : analyzes
+    Survey "1" -- "*" Candidate : taken by
+    Survey "1" -- "*" Company : conducted by
+```
 
 We landed on next domains:
 - **Candidate** : Covering flow related to candidate: creating profile, uploading and iterating on resume, overview of matches.
@@ -99,7 +143,45 @@ We landed on next domains:
 ## Architecture
 ### Top level architecture 
 
-<img src="diagrams/full_architecture.png">
+``` mermaid
+graph TD
+    A[ClearView Frontend]
+    I[Reporting Endpoint]    
+    A --> C[Candidate Endpoint]
+    C --> S[AI Tips Service]
+    C-->T[Anonymization Service]    
+    A --> D[Employer Endpoint]
+    A --> H[Administrator Endpoint]  
+    C --> E[Matching Service]
+    D --> E
+    C --> J[(ClearView)]
+    D --> J
+    E --> J
+    I-->J    
+    H --> J
+    C --> M[Resume/Ads File Storage]
+    D --> N[Payment Processor]
+    I --> O[Survey Provider]    
+
+    
+    subgraph Storage
+        J
+        M
+    end
+
+
+    subgraph ClearView Unified API
+        C
+        D
+        H
+        I        
+    end
+
+    subgraph External Services
+      N
+      O  
+    end
+```
 
 - ClearView Frontend - top layer using unified APIs which are hiding complexity of the system below.
 
@@ -161,13 +243,55 @@ This will be achieved through improvements in:
 - Formatting Suggestions
 and many others
 
-Flow diagram:
+#### Flow diagram
 
-<img src="diagrams/aitips_flow_diagram.png">
+``` mermaid
+graph TD
+    A[Start] --> B{Tips in DB?}
+    B -->|Yes| C{Resume Updated?}
+    C -->|No| D[Return Stored Tips]
+    C -->|Yes| E[Remove Stored Tips]
+    B -->|No| E
+    E --> F[Load Resume from Storage]
+    F --> G[Send to AI Tips Service]
+    G --> H[Process with External AI Service]
+    H --> I[Generate Suggestions]
+    I --> J[Store Tips in DB]
+    J --> K[Return Tips to User]
+    D --> L[End]
+    K --> L
+```
 
-Sequence diagram:
+#### Sequence diagram
 
-<img src="diagrams/aitips_sequence_diagram.png">
+``` mermaid
+sequenceDiagram
+    participant U as User
+    participant CE as Candidate Endpoint
+    participant DB as Database
+    participant S as Resume/Ad File Storage
+    participant ATS as AI Tips Service
+    participant AS as External AI Service
+
+    U->>CE: Request Resume Tips
+    CE->>DB: Check for Stored Tips
+    alt Tips Available and Resume Not Updated
+        DB->>CE: Return Stored Tips
+        CE->>U: Return Tips
+    else Tips Not Available or Resume Updated
+        CE->>S: Load Resume
+        S->>CE: Return Resume
+        CE->>ATS: Send Resume for Processing
+        ATS->>AS: Process Resume
+        AS->>ATS: Return Suggestions
+        ATS->>CE: Return Processed Tips
+        CE->>DB: Store New Tips
+        CE->>U: Return Tips
+    end
+
+    U->>CE: Update Resume
+    CE->>DB: Remove Stored Tips
+```
 
 **Analysis of LLM Usage for AI-Tips**
 
@@ -222,7 +346,14 @@ Using **LLM-powered anonymization** significantly enhances ClearView’s ability
 - **Eliminating Bias**: By stripping away personal identifiers, ClearView ensures that employers focus on **what matters most**—the candidate’s skills, qualifications, and experience—without being influenced by irrelevant details like name, gender, or ethnicity.
 - **Consistency Across Resumes**: LLMs enable the creation of **standardized anonymized resumes**, giving all candidates an equal opportunity to present themselves in the best possible light without the risk of bias creeping into the review process.
 
-<img src="diagrams/anonimization_service_process.png">
+``` mermaid
+flowchart TD
+    A[User Submits Resume] --> B[Anonymization Service Triggered]
+    B --> C[LLM Analyzes Resume]
+    C --> D[Bias Data Identified and Removed]
+    D --> E[LLM Creates Compelling Anonymized Resume]
+    E --> F[Save Anonymized Resume in File Storage]
+```
 
 
 #### Conclusion
@@ -234,7 +365,24 @@ In ClearView, the **Anonymization Service**, powered by **LLMs**, plays a pivota
 
 The Matching Service in ClearView is designed to process candidate resumes and job advertisements to extract skills and match them, providing a score that indicates the suitability of a candidate for a job. The service is built with flexibility in mind, using **Cosine Similarity** as the default matching algorithm, but allowing for other strategies such as **LLM-based matching** if needed.
 
-<img src="diagrams/matching_service_diagram.png">
+``` mermaid
+graph TD 
+    A[Skill Extraction]
+    B[AI Skill Matching]
+    C[Matching REST Endpoint]
+
+    C --> |invoke| A
+    C --> |invoke| B
+    A --> D[(ClearView Matching Schema)]
+    B --> D
+    C --> D
+
+    subgraph Matching Service
+        A
+        B
+        C
+    end
+```
 
 **Matching REST Endpoint:** The main entry point to the Matching Service. It provides methods to:
 ```
@@ -261,7 +409,13 @@ Matching is done per job advertisement once it is closed to optimize cost. It co
 
 Matching is done for a job in a loop for all candidates . Process for single candidate is depicted on flowchart below.
 
-<img src="diagrams/matching_process.png">
+``` mermaid
+graph LR
+    A[Get Candidate Skills] --> B[Get Job for Candidate]
+    B --> C[Get Job Skills]
+    C --> D[Score Candidate Job Match]
+    D --> E[Store Match Score in Database]
+```
 
 - Get Candidate Skills: Fetch the extracted skills for a candidate based on their CandidateId. Output is a map of skills.
 Example:
@@ -288,12 +442,64 @@ Example :
 }
 ```
 
-<img src="diagrams/skill_extraction_diagram.png">
+``` mermaid
+graph TD
+    C[Matching Endpoint]
+    B[AI Skill Matching]
+    D[(ClearView Matching Schema)]
+    C --> |invoke| A
+    C --> |invoke| B
+    B --> D
+    C --> D
+    subgraph Matching Service
+        C
+        B
+        subgraph A[Skill Extraction]
+            E[Resume/Ad Processing]
+            F[Skill Identification]
+            E --> F
+        end
+        A --> D
+    end
+    H[AI Services]
+    I[(Resume/Ads File Storage)]
+    E --> |read| I
+    F --> |request| H
+    H --> |response| F
+```
 
 Class diagram
 
-<img src="diagrams/skill_extraction_classes.png">
+``` mermaid
+classDiagram
+    %% Skill Extraction Component
+    class SkillExtractor {
+        +extractSkills(documentId: string) CategorizedSkills
+    }
 
+    class ResumeAdProcessor {
+        +processDocument(documentId: string) ProcessedDocument
+    }
+
+    class SkillIdentifier {
+        +identifySkills(processedDocument: ProcessedDocument) IdentifiedSkills
+    }
+
+    %% External Services
+    class AIService {
+        +extractSkills(text: string) Promise~ExtractedSkills~
+    }
+
+    class FileStorage {
+        +getDocument(documentId: string) RawDocument
+    }
+
+    %% Relationships (vertical flow)
+    SkillExtractor --> ResumeAdProcessor : uses
+    ResumeAdProcessor --> FileStorage : uses
+    SkillExtractor --> SkillIdentifier : uses
+    SkillIdentifier --> AIService : uses
+```
 
 #### Scoring Logic
 Scoring candidates against job ads is a complex task, with many potential approaches. Given ClearView’s emphasis on cost-efficiency, we favor solutions that are cost-effective while providing the flexibility to adopt different strategies.
@@ -327,7 +533,30 @@ For the initial implementation, **Cosine Similarity** will be used due to its co
 
 Here is a class diagram representing the Scoring Logic using the Strategy Pattern for implementing both LLM Strategy and Cosine Similarity Strategy.
 
-<img src="diagrams/matching_strategies.png">
+``` mermaid
+classDiagram
+    class MatchingContext {
+        +setStrategy(MatchingStrategy)
+        +executeStrategy(candidateSkills: Map, jobSkills: Map): float
+    }
+    
+    class MatchingStrategy {
+        <<interface>>
+        +score(candidateSkills: Map, jobSkills: Map): float
+    }
+    
+    class CosineSimilarityStrategy {
+        +score(candidateSkills: Map, jobSkills: Map): float
+    }
+    
+    class LLMStrategy {
+        +score(candidateSkills: Map, jobSkills: Map): float
+    }
+
+    MatchingContext --> MatchingStrategy
+    MatchingStrategy <|-- CosineSimilarityStrategy
+    MatchingStrategy <|-- LLMStrategy
+```
 
 Explanation:
 
@@ -344,9 +573,15 @@ In case we figure out that Cosine Similarity is not producing good enough result
 
 Process is depicted in the flowchart below.
 
-<img src="diagrams/matching_improved_process.png">
-
-
+``` mermaid
+graph LR
+    A[Get Candidate Skills] --> B[Get Job for Candidate]
+    B --> C[Get Job Skills]
+    C --> D[Cosine Similarity Score]
+    D --> E[Get top X scores]
+    E --> F[LLM Similarity Score]    
+    F --> G[Store Match Score in Database]
+```
 
 ## Integration
 
@@ -356,10 +591,6 @@ We will use third party Payment processor, so much of complexity is solved there
 
 For HR integration we offer using ClearView app to access Employer pages. However it will be possible to integrate using the unified API as well.
 
-<img src="diagrams/clearview_integration_diagram.png">
-
----
-# MERMAID EXAMPLE
 ```mermaid
 graph TD
     A[ClearView Frontend]
@@ -415,7 +646,6 @@ graph TD
         E4 --> F3
     end
 ```
----
 
 | ADR # | Title                                           | Why                                                                                                  | Trade-offs                                                                                                                                                                                   | Link                             |
 | ----- | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
@@ -771,7 +1001,31 @@ Enabling HR systems integration for better job ad synchronization.
 Tracking employer activity, including interviews and candidate progression.
 This solution will involve a set of API CRUD operations, a payment gateway integration, and the necessary database structure to manage the employer's data, payment records, and job posting history.
 
-<img src="diagrams/employer_diagram.png">
+``` mermaid
+graph TD
+    subgraph Employer_Operations
+        A[Employer Registration] --> B[Employer Dashboard]
+        B --> C[Create/Update Job Role]
+        B --> D[View Job Ads]
+        C --> F[Save Job Ad to Database]
+        D --> F
+    end
+
+    subgraph Payment_Processing
+        B --> E[Make Payment to Unlock Candidate Profile]
+        E --> G[Trigger Payment Gateway]
+        G --> H[Payment Successful?]
+        H -->|Yes| I[Unlock Candidate Profile]
+        H -->|No| J[Show Payment Failure]
+    end
+    
+    subgraph HR_Integration
+        B --> K[HR System Integration]
+        K --> L[Synchronize Job Ads with HR System]
+        L --> M[Update in ClearView and HR System]
+        I --> M
+    end
+```
 
 **Related ADRs**
 
@@ -997,7 +1251,22 @@ Body:
      "strategy": "cosineSimilarity"
    }
 ```
-<img src="diagrams/administrator_class_diagram.png">
+
+``` mermaid
+classDiagram
+    class AdministratorEndpoint {
+        +updateCandidateHireStatus(candidateId: String, jobAdId: String, status: String)
+        +updateUser(userId: String, data: JSON)
+        +updateCandidate(candidateId: String, data: JSON)
+        +updateEmployer(employerId: String, data: JSON)
+        +updateMatchingStrategyConfig(strategy: String)
+    }
+
+    AdministratorEndpoint --> Candidate : Manage Candidate Data
+    AdministratorEndpoint --> Employer : Manage Employer Data
+    AdministratorEndpoint --> MatchingService : Update Matching Strategy
+    AdministratorEndpoint --> User : Manage User Data
+```
 
 How It Works:
 
@@ -1112,7 +1381,129 @@ Parameters: ```dateFrom```,```dateTo```
 
 Based on domain we modeled this is the database structure we designed.
 
-<img src="diagrams/ER_diagram.png">
+```mermaid
+%%{init: {
+  'theme': 'dark',
+  'themeVariables': {
+    'primaryColor': '#BB86FC',
+    'primaryTextColor': '#fff',
+    'primaryBorderColor': '#fff',
+    'lineColor': '#fff',
+    'secondaryColor': '#03DAC6',
+    'tertiaryColor': '#333333',
+    'textColor': '#fff'
+  }
+}}%%
+erDiagram
+    CANDIDATE ||--o| RESUME : has
+    RESUME ||--o{ TIP : has
+    CANDIDATE ||--o{ CANDIDATE_SKILL : possesses
+    SKILL ||--o{ CANDIDATE_SKILL : possessed_by
+    COMPANY ||--o{ JOB : posts
+    JOB ||--o{ JOB_SKILL : requires
+    SKILL ||--o{ JOB_SKILL : required_by
+    COMPANY ||--o{ MATCHING : uses
+    CANDIDATE ||--o{ MATCHING : participates_in
+    JOB ||--o{ MATCHING : involved_in
+    COMPANY ||--o{ PAYMENT : makes
+    PAYMENT ||--|| RESUME : unlocks
+    BUSINESS_REPORT ||--o{ COMPANY : analyzes
+    SERVICE_REPORT ||--o{ CANDIDATE : analyzes
+    SERVICE_REPORT ||--o{ COMPANY : analyzes
+    SURVEY ||--o{ CANDIDATE : taken_by
+    SURVEY ||--o{ COMPANY : conducted_by
+
+    CANDIDATE {
+        int candidate_id PK
+        string name
+        string email
+        string phone
+        date date_of_birth
+    }
+
+    RESUME {
+        int resume_id PK
+        int candidate_id FK
+        string resume_url
+        date last_updated
+    }
+
+    TIP {
+        int tip_id PK
+        int resume_id FK
+        string content
+        date created_at
+    }
+
+    JOB {
+        int job_id PK
+        int company_id FK
+        string title
+        string description
+        date posted_date
+        string status
+    }
+    
+    SKILL {
+        int skill_id PK
+        string name
+        string category
+    }
+
+    CANDIDATE_SKILL {
+        int candidate_id FK
+        int skill_id FK
+    }
+
+    JOB_SKILL {
+        int job_id FK
+        int skill_id FK
+    }
+
+    COMPANY {
+        int company_id PK
+        string name
+        string industry
+        string location
+    }
+
+    MATCHING {
+        int matching_id PK
+        int company_id FK
+        int candidate_id FK
+        int job_id FK
+        float match_score
+        date matched_date
+    }
+
+    PAYMENT {
+        int payment_id PK
+        int company_id FK
+        int resume_id FK
+        decimal amount
+        date payment_date
+    }
+
+    BUSINESS_REPORT {
+        int report_id PK
+        int company_id FK
+        date report_date
+        blob report_content
+    }
+
+    SERVICE_REPORT {
+        int report_id PK
+        date report_date
+        blob report_content
+    }
+
+    SURVEY {
+        int survey_id PK
+        string survey_type
+        date survey_date
+        blob survey_content
+    }
+```
 
 |ADR #| 	Title| 	Why |	Trade-offs 	| Link |
 |------|----------|-----|--------------|-----|	
