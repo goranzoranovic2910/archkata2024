@@ -24,6 +24,6 @@ GET /employer/{id}/payments: Retrieve payment history for an employer.
 
 ## HR System Integration
 ```
-POST /employer/{id}/hr-integration: Integrate ClearView with an HR system.
-GET /employer/{id}/hr-sync: Synchronize job ads with HR system.
+POST /employer/{id}/hr_integration: Integrate ClearView with an HR system.
+GET /employer/{id}/hr_sync: Synchronize job ads with HR system.
 ```
