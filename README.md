@@ -366,10 +366,6 @@ For HR integration we offer using ClearView app to access Employer pages. Howeve
 ## REST API
 ### Candidate Endpoint
 
-Subset of domain model used for Candidate Endpoints:
-
-<img src="diagrams/candidate_class_diagram.png">
-
 **Related ADRs**
 
 |ADR #| 	Title| 	Why |	Trade-offs 	| Link |
