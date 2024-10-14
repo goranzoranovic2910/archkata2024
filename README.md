@@ -625,9 +625,9 @@ graph TD
 
     %% Integration of the Employer and Payment module %%
     subgraph Employer_Operations
-        D --> D1[Create/Update Job Role]
-        D --> D2[View Job Roles]
-        D1 --> D3[Save Job Role to Database]
+        D --> D1[Create/Update Job Ad]
+        D --> D2[View Job Ads]
+        D1 --> D3[Save Job Ad to Database]
         D2 --> D3
     end
 
@@ -641,7 +641,7 @@ graph TD
 
     subgraph HR_Integration
         D --> F1[HR System Integration]
-        F1 --> F2[Synchronize Job Roles with HR System]
+        F1 --> F2[Synchronize Job Ads with HR System]
         F2 --> F3[Update in ClearView and HR System]
         E4 --> F3
     end
@@ -1005,7 +1005,7 @@ This solution will involve a set of API CRUD operations, a payment gateway integ
 graph TD
     subgraph Employer_Operations
         A[Employer Registration] --> B[Employer Dashboard]
-        B --> C[Create/Update Job Role]
+        B --> C[Create/Update Job Ad]
         B --> D[View Job Ads]
         C --> F[Save Job Ad to Database]
         D --> F
