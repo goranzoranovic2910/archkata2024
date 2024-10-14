@@ -358,6 +358,65 @@ For HR integration we offer using ClearView app to access Employer pages. Howeve
 
 <img src="diagrams/clearview_integration_diagram.png">
 
+---
+# MERMAID EXAMPLE
+```mermaid
+graph TD
+    A[ClearView Frontend]
+    I[Reporting Endpoint]
+    A --> C[Candidate Endpoint]
+    C --> S[AI Tips Service]
+    A --> D[Employer Endpoint]
+    A --> H[Administrator Endpoint]
+    C --> E[Matching Service]
+    D --> E
+    C --> J[(ClearView Database)]
+    D --> J
+    E --> J
+    I --> J
+    H --> J
+    C --> M[Resumes File Storage]
+
+    subgraph Storage
+        subgraph Candidate_Data
+            J
+            M
+        end
+        J
+    end
+
+    subgraph ClearView Unified API
+        C
+        D
+        H
+        I
+    end
+
+    %% Integration of the Employer and Payment module %%
+    subgraph Employer_Operations
+        D --> D1[Create/Update Job Role]
+        D --> D2[View Job Roles]
+        D1 --> D3[Save Job Role to Database]
+        D2 --> D3
+    end
+
+    subgraph Payment_Processing
+        D --> E1[Make Payment to Unlock Candidate Profile]
+        E1 --> E2[Trigger Payment Gateway]
+        E2 --> E3[Payment Successful?]
+        E3 -->|Yes| E4[Unlock Candidate Profile]
+        E3 -->|No| E5[Show Payment Failure]
+    end
+
+    subgraph HR_Integration
+        D --> F1[HR System Integration]
+        F1 --> F2[Synchronize Job Roles with HR System]
+        F2 --> F3[Update in ClearView and HR System]
+        E4 --> F3
+    end
+```
+---
+
 | ADR # | Title                                           | Why                                                                                                  | Trade-offs                                                                                                                                                                                   | Link                             |
 | ----- | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
 | 04    | Unified API with multiple endpoints             | Simplifies architecture by having a single API with various endpoints for different functionalities. | Can lead to large, complex APIs over time, making it harder to maintain clear boundaries between services. Reducing number of API services to one instead of multiple (one for each domain). | <a href="adr/adr04.md">ADR04</a> |
