@@ -88,6 +88,7 @@ classDiagram
     class Resume
     class Tip
     class Job
+    class JobApplication
 
     %% Candidate and Company Group
     class Skill
@@ -107,25 +108,25 @@ classDiagram
     class Survey
 
     %% Relationships
-    Candidate "1" -- "0..1" Resume : has
-    Resume "1" -- "*" Tip : has
-    
-    
-    Candidate "1" -- "*" Skill : possesses
-    
-    Company "1" -- "*" Job : posts
-    Job "1" -- "*" Skill : requires
-    Company "1" -- "*" Matching : uses
-    Candidate "1" -- "*" Matching : participates in
-    Job "1" -- "*" Matching : involved in
-    Company "1" -- "*" Payment : makes
-    Payment "1" -- "1" Resume : unlocks
-    BusinessReport "1" -- "*" Company : analyzes
-    ServiceReport "1" -- "*" Candidate : analyzes
-    ServiceReport "1" -- "*" Company : analyzes
-    Survey "1" -- "*" Candidate : taken by
-    Survey "1" -- "*" Company : conducted by
+    Candidate -- Resume
+    Resume -- Tip
+    Candidate -- JobApplication
+    Job -- JobApplication
+    Candidate -- Skill
+    Company -- Job
+    Job -- Skill
+    Company -- Matching
+    Candidate -- Matching
+    Job -- Matching
+    Company -- Payment
+    Payment -- Resume
+    BusinessReport -- Company
+    ServiceReport -- Candidate
+    ServiceReport -- Company
+    Survey -- Candidate
+    Survey -- Company
 ```
+Detailed model is available on <a href="models/domain_model.md">Domain Model</a> page.
 
 We landed on next domains:
 - **Candidate** : Covering flow related to candidate: creating profile, uploading and iterating on resume, overview of matches.
