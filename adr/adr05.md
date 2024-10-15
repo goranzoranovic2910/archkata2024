@@ -1,4 +1,4 @@
-### ADR 06: Split Database by Schema to Decouple Domains and Improve Security
+### ADR 05: Split Database by Schema to Decouple Domains and Improve Security
 
 - **Title**: Split database by schema to decouple domains and improve security
 - **Status**: Accepted
