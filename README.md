@@ -369,7 +369,7 @@ flowchart TD
     D --> E[LLM Creates Compelling Anonymized Resume]
     E --> F[Save Anonymized Resume in File Storage]
 ```
-<div align="center"><i>Resume Anonymization process</i></div>
+<div align="center"><i>Resume Anonymization - Flow Diagram</i></div>
 
 #### Conclusion
 
@@ -398,7 +398,7 @@ graph TD
         C
     end
 ```
-<div align="center"><i>Metching Service - Component Diagram</i></div>
+<div align="center"><i>Matching Service - Component Diagram</i></div>
 <br/>
 
 **Matching REST Endpoint:** The main entry point to the Matching Service. It provides methods to:
@@ -429,7 +429,7 @@ graph LR
     C --> D[Score Candidate Job Match]
     D --> E[Store Match Score in Database]
 ```
-<div align="center"><i>Metching Process</i></div>
+<div align="center"><i>Matching Process - Flow Diagram</i></div>
 <br/>
 
 - Get Candidate Skills: Fetch the extracted skills for a candidate based on their CandidateId. Output is a map of skills.
@@ -1042,6 +1042,8 @@ graph TD
         I --> M
     end
 ```
+<div align="center"><i>Employer Functionality - Component Diagram</i></div>
+<br/>
 
 **Related ADRs**
 
@@ -1281,6 +1283,8 @@ classDiagram
     AdministratorEndpoint --> MatchingService : Update Matching Strategy
     AdministratorEndpoint --> User : Manage User Data
 ```
+<div align="center"><i>Administrator Functionality - Class Diagram</i></div>
+<br/>
 
 How It Works:
 
