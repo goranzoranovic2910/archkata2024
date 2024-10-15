@@ -139,6 +139,8 @@ classDiagram
     Survey -- Candidate
     Survey -- Company
 ```
+<div align="center"><i>Domain Model</i></div>
+
 Detailed model is available on <a href="models/domain_model.md">Domain Model</a> page.
 
 We landed on next domains:
@@ -253,8 +255,6 @@ This will be achieved through improvements in:
 - Formatting Suggestions
 and many others
 
-#### Flow diagram
-
 ``` mermaid
 graph TD
     A[Start] --> B{Tips in DB?}
@@ -271,8 +271,8 @@ graph TD
     D --> L[End]
     K --> L
 ```
-
-#### Sequence diagram
+<div align="center"><i>AI Tips - Flow Diagram</i></div>
+<br/>
 
 ``` mermaid
 sequenceDiagram
@@ -302,6 +302,8 @@ sequenceDiagram
     U->>CE: Update Resume
     CE->>DB: Remove Stored Tips
 ```
+<div align="center"><i>AI Tips - Sequence Diagram</i></div>
+<br/>
 
 **Analysis of LLM Usage for AI-Tips**
 
@@ -364,7 +366,7 @@ flowchart TD
     D --> E[LLM Creates Compelling Anonymized Resume]
     E --> F[Save Anonymized Resume in File Storage]
 ```
-
+<div align="center"><i>Anonymization process</i></div>
 
 #### Conclusion
 
@@ -393,6 +395,8 @@ graph TD
         C
     end
 ```
+<div align="center"><i>Metching Service - Component Diagram</i></div>
+<br/>
 
 **Matching REST Endpoint:** The main entry point to the Matching Service. It provides methods to:
 ```
@@ -422,6 +426,8 @@ graph LR
     C --> D[Score Candidate Job Match]
     D --> E[Store Match Score in Database]
 ```
+<div align="center"><i>Metching Process</i></div>
+<br/>
 
 - Get Candidate Skills: Fetch the extracted skills for a candidate based on their CandidateId. Output is a map of skills.
 Example:
@@ -473,8 +479,8 @@ graph TD
     F --> |request| H
     H --> |response| F
 ```
-
-Class diagram
+<div align="center"><i>Skill extraction - Component Diagram</i></div>
+<br/>
 
 ``` mermaid
 classDiagram
@@ -506,6 +512,8 @@ classDiagram
     SkillExtractor --> SkillIdentifier : uses
     SkillIdentifier --> AIService : uses
 ```
+<div align="center"><i>Skill extraction - Class Diagram</i></div>
+<br/>
 
 #### Scoring Logic
 Scoring candidates against job ads is a complex task, with many potential approaches. Given ClearView’s emphasis on cost-efficiency, we favor solutions that are cost-effective while providing the flexibility to adopt different strategies.
