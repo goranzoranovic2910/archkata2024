@@ -1361,7 +1361,7 @@ Parameters: ```dateFrom```,```dateTo```
 
 ## Storage
 ### Database
-Data base is designed by following principles explained in ADRs below.
+Database is designed by following principles explained in ADRs below.
 
 |ADR #| 	Title| 	Why |	Trade-offs 	| Link |
 |------|----------|-----|--------------|-----|	
