@@ -2,7 +2,7 @@
  
 ## Equi Hire Architects Team
 
-We are a team of software engineers from Microsoft Serbia very passionate about software architecture. We have been practicing architectural katas inside our team inspired by books and videos from Neal Ford and Mark Richards. This time we decided to challenge ourselves and participate in official event.
+We are a team of software engineers from Microsoft Serbia passionate about software architecture. We have been practicing architectural katas within our team, drawing inspiration from books and videos by Neal Ford and Mark Richards. This time, we decided to challenge ourselves by participating in an official event.
 
 - [Uros Milivojevic](https://www.linkedin.com/in/urosmilivojevic/)
 - [Marjan Slavkovski](https://www.linkedin.com/in/marjan-s/)
@@ -47,20 +47,33 @@ Diversity Cyber Council (https://www.diversitycybercouncil.com/) is a 501c3 Non-
 High level requirements are listed in this document:
 [Requirements](https://docs.google.com/document/d/1jCHMAvgzqaYaAp09br12OC4ozpVXZR3s9ezgEqncZ9U/edit#heading=h.jsoimuz95gvo)
 
-Additionally, through communication with stakeholders we found few other requirements:
+Additionally, through communication with stakeholders we found several other requirements:
 
-- Cost is important aspect and we should aim to reduce it.
-- Big volumes of users are not expected so scalability is not very important.
-- There is a possibility of potential adding new AI features in the future, but it is not hard requirement.
-- System will be maintained by current Diversity Cyber Council IT team
+- Due to the nature of our customer being a Non-Profit organization cost of the solution is an important aspect, and we should aim to reduce it.
+- Based on market research done by our subject matter expert big volumes of users are not expected, so scalability is not very important.
+- There is a possibility of potential adding new AI features in the future, although this is not a hard requirement we should aim to allow greater extendibility for this part of the system.
+- System will be maintained by current Diversity Cyber Council IT team.
+
+The following are our assumptions and considerations based on our understanding of the business problem and the client. These could be reviewed more with subject matter experts in the future to solidify our understanding but we are using them as given due to limited time constraints of the competition:
+- The employee will be given the top candidates once per Job Ad. This requirement was made because it allows for easiest integration with other HR systems (no live updates that need tracking, no changes in candidates simplifies the response) which is an important ask from the perspective of the employer.
+- Security of the system should be additionally heightened due to dealing with secure personal candidate data.
+- Considering that our solution is based on AI technologies which are probabilistic by nature, we need to make sure that our solution gives good quality results which are not biased and are following responsible AI guidelines.
 
 ## Identifying architecture characteristics 
 
-Taking into account all requirements we decided that 3 main characteristics for our solution should be: **Cost, Interoperability and Simplicity.**
+Taking into account all requirements we decided that 3 main characteristics for our solution should be: **Cost, Interoperability and Simplicity.** Cost and simplicity are paramount due to our client being a non-profit organization with limited resources available for funding implementation and maintenance of the solution. Considering that the main value proposition of our solution is allowing companies to seamlessly integrate ClearView within their HR systems, Interoperability is also chosen as a main characteristic of the system.
 
 Besides these we consider *Fault-tolerance, Evolvabilty, Scalability, Testability, Workflow and Abstraction.*
 
-*Reliablity* is also important as one of composite characteristis.
+Testability of the system is important for increasing security and reliability of our solution. We have higher security requirements due to dealing with very sensitive personal data (CVs). Additionally increased testability will help us with making sure that our AI driven solution gives good quality results.
+
+Evolvability is also an important characteristic because of the requirement to potentially add new AI features in the future. AI technologies are rapidly changing and we need to allow our system to be ready for those changes.
+
+Fault-tolerance is not the most important characteristic because even if our system temporarily stops operating due to a component failing it will not have big life related consequences and reliability is more important to us from availability. But on the other hand, we do have different types of users and many different parts of the system, so from a user experience perspective it would be good to not have some basic resistance in case some component fails.
+
+After consulting with the subject matter expert regarding the expected volume of users, we concluded that with only 5000 candidates and several hundred employees scalability and elasticity are not driving characteristic. Our biggest processing bottleneck is the matching service, With the expected volume of users and the requirement that we only do the matching once per Job Ad we don't expect sudden changes in processing requirement, which also leads to elasticity not being our primary goal.
+
+*Reliablity* is also important as a composite characteristic.
 
 
 <img src="worksheets/architecture_characteristis.png">
