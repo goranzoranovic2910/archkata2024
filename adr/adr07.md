@@ -1,4 +1,4 @@
-### ADR 08: Split AI Tips, Anonymization, and Matching Services
+### ADR 07: Split AI Tips, Anonymization, and Matching Services
 
 - **Title**: Split AI tips, Anonymization, and Matching services
 - **Status**: Accepted
