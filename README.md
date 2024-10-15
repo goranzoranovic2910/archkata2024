@@ -140,6 +140,7 @@ classDiagram
     Survey -- Company
 ```
 <div align="center"><i>Domain Model</i></div>
+<br/>
 
 Detailed model is available on <a href="models/domain_model.md">Domain Model</a> page.
 
@@ -198,6 +199,8 @@ graph TD
       O  
     end
 ```
+<div align="center"><i>Top Level Architecture - Component Diagram</i></div>
+<br/>
 
 - ClearView Frontend - top layer using unified APIs which are hiding complexity of the system below.
 
@@ -366,7 +369,7 @@ flowchart TD
     D --> E[LLM Creates Compelling Anonymized Resume]
     E --> F[Save Anonymized Resume in File Storage]
 ```
-<div align="center"><i>Anonymization process</i></div>
+<div align="center"><i>Resume Anonymization process</i></div>
 
 #### Conclusion
 
@@ -566,6 +569,8 @@ classDiagram
     MatchingStrategy <|-- CosineSimilarityStrategy
     MatchingStrategy <|-- LLMStrategy
 ```
+<div align="center"><i>Scoring Logic - Class Diagram</i></div>
+<br/>
 
 Explanation:
 
@@ -591,6 +596,8 @@ graph LR
     E --> F[LLM Similarity Score]    
     F --> G[Store Match Score in Database]
 ```
+<div align="center"><i>Hybrid Matching - Flow Diagram</i></div>
+<br/>
 
 ## Integration
 
@@ -655,6 +662,8 @@ graph TD
         E4 --> F3
     end
 ```
+<div align="center"><i>External Systems Integration - Component Diagram</i></div>
+<br/>
 
 | ADR # | Title                                           | Why                                                                                                  | Trade-offs                                                                                                                                                                                   | Link                             |
 | ----- | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
