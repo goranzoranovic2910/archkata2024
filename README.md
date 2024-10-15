@@ -884,187 +884,181 @@ Both methods ensure that ClearView can fit into different organizational structu
 
 The API will enable the following operations:
 
-- Employer:
-```
-POST /employer: Register a new employer and autofill company details.
-GET /employer/{id}: Retrieve employer details, including job ads and payment history.
-PUT /employer/{id}: Update employer information.
-DELETE /employer/{id}: Deactivate employer profile.
-GET /employer/{employer_id}/{candidate_id}/Anonymized : Download anonymized candidate resume.
-GET /employer/{employer_id}/candidates/{candidate_id}/resume: Download unlocked candidate resume.
-```
-- Job Ads:
-```
-POST /employer/{id}/job: Create a new job ad.
-GET /employer/{id}/jobs: Retrieve all job ads for an employer.
-PUT /employer/{id}/job/{job_id}: Update a job ad.
-DELETE /employer/{id}/job/{job_id}: Remove a job ad.
-```
-- Payments:
+##### Employer
+
+###### Register employer
 
 ```
-POST /employer/{id}/payment: Make a payment to unlock candidate profiles or services.
-GET /employer/{id}/payments: Retrieve payment history for an employer.
+POST /api/employer
 ```
 
-- HR System Integration:
+The `Register Employer` method allows a new employer to create an account and autofill company details. Upon successful registration, the employer's information is stored, and a unique employer ID is generated. The response includes the employer's ID and details.
+
+###### Retrieve Employer Details
+
 ```
-POST /employer/{id}/hr-integration: Integrate ClearView with an HR system.
-GET /employer/{id}/hr-sync: Synchronize job ads with HR system.
+GET /api/employer/{employer_id}
 ```
+
+The `Retrieve Employer Details` method allows an employer to view their account information, including job ads and payment history.
+
+###### Update Employer Information
+
+```
+PUT /api/employer/{employer_id}
+```
+
+The `Update Employer Information` method allows an employer to update their profile. The request body should contain the fields to be updated.
+
+###### Deactivate Employer Profile
+
+```
+DELETE /employer/{employer_id}
+```
+
+The `Deactivate Employer Profile` method allows an employer to deactivate their account. Upon successful deactivation, the response includes a confirmation message.
+
+###### Download Anonymized Candidate Resume
+
+```
+GET /api/employer/{employer_id}/{candidate_id}/anonymized
+```
+
+The `Download Anonymized Candidate Resume` method allows an employer to retrieve an anonymized resume for a specific candidate.
+
+##### Download Unlocked Candidate Resume
+
+```
+GET /api/employer/{employer_id}/candidates/{candidate_id}/resume
+```
+
+The `Download Unlocked Candidate Resume` method allows an employer to retrieve an unlocked candidate resume that has been paid for or otherwise authorized.
+
+##### Job Ads
+
+###### Create Job Ad
+
+```
+POST /api/employer/{employer_id}/job
+```
+
+The `Create Job Ad` method allows an employer to create a new job ad. The request body should contain the details of the job to be posted.
+
+###### Retrieve Job Ads
+
+```
+GET /api/employer/{employer_id}/jobs
+```
+
+The `Retrieve Job Ads` method allows an employer to view all of their job ads.
+
+###### Update Job Ad
+
+```
+PUT /api/employer/{employer_id}/job/{job_id}
+```
+
+The `Update Job Ad` method allows an employer to update an existing job ad. The request body should include the fields to be updated.
+
+###### Remove Job Ad
+
+```
+DELETE /api/employer/{employer_id}/job/{job_id}
+```
+
+The `Remove Job Ad` method allows an employer to delete a job ad from their list.
+
+##### Payments:
+
+###### Make Payment
+
+```
+POST /api/employer/{employer_id}/payment
+```
+
+The `Make Payment` method allows an employer to make a payment for unlocking candidate profiles or other services.
+
+###### Retrieve Payment History
+
+```
+GET /api/employer/{employer_id}/payments
+```
+
+The `Retrieve Payment History` method allows an employer to view the history of payments made.
+
+##### HR System Integration
+
+###### Integrate with HR System
+
+```
+POST /api/employer/{employer_id}/hr-integration
+```
+
+The `Integrate with HR System` method allows an employer to integrate ClearView with their own HR system.
+
+###### Synchronize with HR System
+
+```
+GET /api/employer/{employer_id}/hr-sync
+```
+
+The `Synchronize with HR System` method allows an employer to synchronize job ads between ClearView and their HR system.
+
 ### Administrator Endpoint
 
 #### Administrator Endpoint Overview
 The Administrator Endpoint is designed to provide system administrators with special privileges for managing users, candidates, employers, and the skill-matching configuration. This includes the ability to update hire statuses, modify user data, and change the matching strategy (e.g., switch between Cosine Similarity and LLM-based matching).
 
-**Related ADRs**
+##### Related ADRs
 
 | ADR # | Title                               | Why                                                                                                                                                                            | Trade-offs                                                                                                                                                                                   | Link                             |
 | ----- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
 | 03    | Organize components per domain      | Organizes ClearView components into domain-specific groups (candidate, employer, matching, etc.) to separate concerns effectively and improve maintainability and testability. | Requires managing inter-domain communication and potentially increasing complexity if domains grow interdependent.                                                                           | <a href="adr/adr03.md">ADR03</a> |
 | 04    | Unified API with multiple endpoints | Simplifies architecture by having a single API with various endpoints for different functionalities.                                                                           | Can lead to large, complex APIs over time, making it harder to maintain clear boundaries between services. Reducing number of API services to one instead of multiple (one for each domain). | <a href="adr/adr04.md">ADR04</a> |
 
-**Administrator Endpoint Methods**
+##### Administrator Endpoint Methods
 
-**updateCandidateHireStatus:**
+###### Update Candidate Hire Status
 
-Description: Allows an administrator to update the hire status of a candidate.
-
-Parameters:
 ```
-candidateId: The ID of the candidate.
-jobAdId: The ID of the job the candidate applied to.
-status: The new hire status (`hired`, rejected, pending).
-```
-Response: 
-```json 
-{"success": true, "message": "Candidate hire status updated"}
- ```
-
-Example Usage:
-```
-   PUT /api/admin/updateCandidateHireStatus
-```
-Body:
-``` json
-   {
-     "candidateId": "123",
-     "jobAdId": "456",
-     "status": "hired"
-   }
+PUT /api/admin/updateCandidateHireStatus/{candidateId}
 ```
 
-**updateUser**
+The `Update Candidate Hire Status` method allows an administrator to update the hire status of a candidate for a specific job.
 
-Description: Allows an administrator to update general user data, including for candidates and employers.
+###### Update User
 
-Parameters:
 ```
-userId: The ID of the user.
-data: A JSON object containing the updated user data (e.g., name, email, etc.).
-```
-Response: 
-``` json
-{"success": true, "message": "User data updated"}
+PUT /api/admin/updateUser/{userId}
 ```
 
-Example Usage:
+The `Update User` method allows an administrator to update general user data, including for candidates and employers.
+
+###### Update Candidate
+
 ```
-   PUT /api/admin/updateUser
-```
-Body:
-``` json
-   {
-     "userId": "789",
-     "data": {
-       "email": "newemail@example.com",
-       "name": "Updated Name"
-     }
-   }
+PUT /api/admin/updateCandidate/{candidate_id}
 ```
 
-**updateCandidate**
+The `Update Candidate` method allows an administrator to update candidate details using the candidate's ID.
 
-Description: Allows an administrator to update specific candidate-related data (e.g., skills, resume).
 
-Parameters:
+###### Update Employer
+
 ```
-candidateId: The ID of the candidate.
-data: A JSON object containing the updated candidate data (e.g., skills, resume, etc.).
-```
-Response: 
-``` json
-{"success": true, "message": "Candidate data updated"}
+PUT /api/admin/updateEmployer/{employer_id}
 ```
 
-Example Usage:
+The `Update Employer` method allows an administrator to update employer-related data using the employer's ID.
+
+###### Update Matching Strategy Configuration
+
 ```
-   PUT /api/admin/updateCandidate
-```
-Body:
-``` json
-   {
-     "candidateId": "123",
-     "data": {
-       "skills": ["Java", "Python"],
-       "resume": "updatedResumeData"
-     }
-   }
+PUT /api/admin/updateMatchingStrategyConfig/{strategy}
 ```
 
-**updateEmployer**
+The `Update Matching Strategy Configuration` method allows an administrator to update the matching strategy configuration for the skill-matching service (e.g., switch between Cosine Similarity and LLM).
 
-Description: Allows an administrator to update 
-employer-related data (e.g., company details, job posts).
-
-Parameters:
-```
-employerId: The ID of the employer.
-data: A JSON object containing the updated employer data (e.g., company name, job postings, etc.).
-```
-Response: 
-``` json
-{"success": true, "message": "Employer data updated"}
-```
-
-Example Usage:
-```
-   PUT /api/admin/updateEmployer
-```
-Body:
-``` json
-   {
-     "employerId": "456",
-     "data": {
-       "companyName": "New Company Name",
-       "jobPosts": ["789", "101"]
-     }
-   }
-```
-
-**updateMatchingStrategyConfig**
-
-Description: Allows an administrator to update the matching strategy configuration for the skill-matching service (Cosine Similarity vs. LLM).
-
-Parameters:
-```
-strategy: The new matching strategy (`cosineSimilarity` or LLM).
-```
-Response: 
-``` json
-{"success": true, "message": "Matching strategy updated"}
-```
-
-Example Usage:
-```
-   PUT /api/admin/updateMatchingStrategyConfig
-```
-Body:
-``` json
-   {
-     "strategy": "cosineSimilarity"
-   }
-```
 
 ``` mermaid
 classDiagram
@@ -1097,98 +1091,137 @@ The Reporting API in ClearView is divided into two key sections: **Business Repo
 #### 1. Business Reporting
 The **Business Reporting** section focuses on metrics related to users, job postings, and the effectiveness of ClearView’s matching process. It helps employers and system administrators gain insights into the candidate pool, job activity, and the accuracy of the matching algorithm, providing data-driven feedback on the platform’s performance. Key API methods include:
 
-- **getActiveCandidates**:  
-  Retrieves the number of active candidates over a given period.  
-  Parameters: `dateFrom`, `dateTo`  
-  Response: `{timelineData: [{date: '2024-01-01', count: 1400}, ...]}`
-  
-- **getActiveEmployers**:  
-  Retrieves the number of active employers over a given period.  
-  Parameters: `dateFrom`, `dateTo`  
-  Response: `{timelineData: [{date: '2024-01-01', count: 280}, ...]}`
+#### Business Reporting API Methods
 
-- **getActiveJobs**:  
-  Retrieves the number of active job postings within a time range.  
-  Parameters: `dateFrom`, `dateTo`  
-  Response: `{timelineData: [{date: '2024-01-01', count: 750}, ...]}`
+##### Get Active Candidates
 
-- **getScoreVsOfferComparison**:  
-  Provides a histogram showing the distribution of scores and the number of candidates receiving job offers within each score range. This helps determine the accuracy of the matching algorithm by correlating high scores with high job offer counts.  
-  Parameters: None  
-  Response: `{histogram: [{scoreRange: '0-10', offersCount: 5}, ...]}`
+```
+GET /api/reporting/business/activeCandidates
+```
 
-- **getScoreVsRejectComparison**:  
-  Similar to the previous method, this histogram focuses on candidates who were rejected, comparing the distribution of rejection rates against score ranges.  
-  Parameters: None  
-  Response: `{histogram: [{scoreRange: '0-10', rejectsCount: 40}, ...]}`
+The `Get Active Candidates` method retrieves the number of active candidates over a given period. The parameters `dateFrom` and `dateTo` specify the time range for the data. The response includes a timeline of active candidate counts.
 
-- **getDemographicOfferRejectBreakdown**:  
-  Provides data on offers and rejections categorized by demographic groups, offering insights into the diversity and inclusiveness of the hiring process.  
-  Response: `{demographicData: {gender: {offers: {...}, rejections: {...}}, ethnicity: {...}}}`
+##### Get Active Employers
 
-- **getEmployerSurveyData**:  
-  Retrieves employer feedback, likely sourced from an integrated survey service, offering insights into the employer's experience with the platform.  
-  Response: `{surveyResults: [...]}`
+```
+GET /api/reporting/business/activeEmployers
+```
 
-- **getCandidateSurveyData**:  
-  Similarly, retrieves candidate feedback to evaluate the candidate experience on the platform.  
-  Response: `{surveyResults: [...]}`
+The `Get Active Employers` method retrieves the number of active employers over a given period. The parameters `dateFrom` and `dateTo` specify the time range for the data. The response includes a timeline of active employer counts.
+
+##### Get Active Jobs
+
+```
+GET /api/reporting/business/activeJobs
+```
+
+The `Get Active Jobs` method retrieves the number of active job postings over a given period. The parameters `dateFrom` and `dateTo` specify the time range for the data. The response includes a timeline of active job counts.
+
+##### Get Score Vs Offer Comparison
+
+```
+GET /api/reporting/business/scoreOfferComparison
+```
+
+The `Get Score Vs Offer Comparison` method provides a histogram showing the distribution of scores and the number of candidates receiving job offers within each score range. This helps determine the accuracy of the matching algorithm by correlating high scores with high job offer counts.
+
+##### Get Score Vs Reject Comparison
+
+```
+GET /api/reporting/business/scoreRejectComparison
+```
+
+The `Get Score Vs Reject Comparison` method provides a histogram showing the distribution of scores and the number of candidates rejected within each score range. This helps identify score ranges where candidates are more likely to be rejected.
+
+##### Get Demographic Offer Reject Breakdown
+
+```
+GET /api/reporting/business/demographicOfferRejectBreakdown
+```
+
+The `Get Demographic Offer Reject Breakdown` method provides data on offers and rejections categorized by demographic groups
+
+##### Get Employer Survey Data
+
+``` 
+GET /api/reporting/business/employerSurvey
+```
+
+The `Get Employer Survey Data` method retrieves feedback from employers, offering insights into their experience with the platform. The response includes survey results.
+
+
+##### Get Candidate Survey Data
+
+```
+GET /api/reporting/business/candidateSurvey
+```
+
+The `Get Candidate Survey Data` method retrieves feedback from candidates, evaluating their experience on the platform. The response includes survey results.
 
 #### 2. Service Review
+
 The **Service Review** section monitors the health and performance of ClearView’s services, including metrics related to errors, downtime, and performance of the **LLM services**. Key API methods include:
 
-- **getErrorsOverview**:  
-  Provides a breakdown of errors across pages, endpoints, or services to help identify and address system issues.  
-  Parameters: `filterBy: page/endpoint/service`  
-  Response: `{totalErrors: 50, errorsByEndpoint: {...}}`
+##### Service Review API Methods
 
-- **getCrashesOverview**:  
-  Retrieves data on system crashes, providing an overview of system stability.  
-  Response: `{totalCrashes: 5, crashDetails: [...]}`
+##### Get Errors Overview
 
-- **getServiceDowntime**:  
-  Provides details on service downtime, broken down by different services.  
-  Response: `{totalDowntime: '5 hours', breakdown: {...}}`
+```
+GET /api/reporting/service/errorsOverview
+```
 
-- **getLLMLatency**:  
-  Reports on the latency of LLM services, helping monitor and optimize LLM performance.  
-  Response: `{averageLatency: 200ms, breakdownByService: {...}}`
+The `Get Errors Overview` method provides a breakdown of errors across pages, endpoints, or services to help identify and address system issues. The parameter `filterBy` specifies whether to filter by page, endpoint, or service. The response includes the total number of errors and a detailed breakdown.
 
-- **getLLMCost**:  
-  Provides cost data related to running LLM services, offering insights into the financial impact of these operations.  
-  Response: `{totalCost: 1500, breakdownByUsage: {...}}`
+##### Get Crashes Overview
 
-- **getLLMCapacityUsage**:  
-  Reports on the capacity usage of the LLM service to ensure the system is operating within its performance limits.  
-  Response: `{totalCapacityUsed: 75%, usageDetails: {...}}`
+```
+GET /api/reporting/service/crashesOverview
+```
 
-#### API Endpoints Overview:
+The `Get Crashes Overview` method retrieves data on system crashes, providing an overview of system stability. The response includes the total number of crashes and detailed crash information.
 
-- `/api/reporting/business/activeCandidates` – Returns active candidate count and timeline.
-- `/api/reporting/business/activeEmployers` – Returns active employer count and timeline.
-- `/api/reporting/business/activeJobs` – Returns active job count and timeline.
-- `/api/reporting/business/scoreOfferComparison` – Compares score vs. job offers.
-- `/api/reporting/business/scoreRejectComparison` – Compares score vs. rejections.
-- `/api/reporting/business/demographicOfferRejectBreakdown` – Breaks down offers/rejections by demographics.
-- `/api/reporting/business/employerSurvey` – Retrieves employer survey data.
-- `/api/reporting/business/candidateSurvey` – Retrieves candidate survey data.
-- `/api/reporting/service/errorsOverview` – Provides an error overview by endpoint/service.
-- `/api/reporting/service/crashesOverview` – Retrieves system crash data.
-- `/api/reporting/service/serviceDowntime` – Retrieves downtime data for services.
-- `/api/reporting/service/llmLatency` – Returns LLM latency data.
-- `/api/reporting/service/llmCost` – Provides cost details for LLM operations.
-- `/api/reporting/service/llmCapacity` – Retrieves LLM capacity usage data.
+##### Get Service Downtime
+
+```
+GET /api/reporting/service/serviceDowntime
+```
+
+The `Get Service Downtime` method provides details on service downtime, broken down by different services. The response includes the total downtime and a breakdown by service.
+
+##### Get LLM Latency
+
+```
+GET /api/reporting/service/llmLatency
+```
+
+The `Get LLM Latency` method reports on the latency of LLM services, helping monitor and optimize LLM performance. The response includes the average latency and a breakdown by service.
+
+##### Get LLM Cost
+
+```
+GET /api/reporting/service/llmCost
+```
+
+The `Get LLM Cost` method provides cost data related to running LLM services, offering insights into the financial impact of these operations. The response includes the total cost and a breakdown by usage.
+
+##### Get LLM Capacity Usage
+
+```
+GET /api/reporting/service/llmCapacity
+```
+
+The `Get LLM Capacity Usage` method reports on the capacity usage of the LLM service to ensure the system is operating within its performance limits. The response includes the total capacity used and detailed usage information.
 
 #### Triggering data aggregation
 
-Data agregation is triggered on a monthly basis by Admin. To trigger it we will use ```runDataAggregation(dateFrom, dateTo)```. This method will run backend process to gather data. Since we are operating on single database, all the aggregation we need at this point can be covered by a Database job. 
+```
+POST /api/reporting/service/runDataAggregation/{dateFrom}/{dateTo}
+```
 
+The `runDataAggregation` method triggers the backend process to gather monthly data. The parameters `dateFrom` and `dateTo` specify the time range for data aggregation.
+This method will run backend process to gather data. Since we are operating on single database, all the aggregation we need at this point can be covered by a Database job. 
 This job could potentially be triggered by schedule in Database, however, based on requirements we want to allow Admin to trigger it as well.
 
-**runDataAggregation** : Runs database job to gather monthly data.
-Parameters: ```dateFrom```,```dateTo```
-
-- `/api/reporting/service/runDataAggregation`
 
 ## Storage
 ### Database
