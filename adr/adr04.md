@@ -1,4 +1,4 @@
-### ADR 05: One Relational Database and One File-Storage DB
+### ADR 04: One Relational Database and One File-Storage DB
 
 - **Title**: One relational database and one file-storage DB
 - **Status**: Accepted
