@@ -1,4 +1,4 @@
-### ADR 11: Use Lightweight Authentication (OAuth2, Shiro)
+### ADR 08: Use Lightweight Authentication (OAuth2, Shiro)
 
 - **Title**: Use lightweight authentication (OAuth2, Shiro)
 - **Status**: Accepted
