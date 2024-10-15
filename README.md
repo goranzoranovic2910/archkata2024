@@ -1362,14 +1362,14 @@ Parameters: ```dateFrom```,```dateTo```
 ## Storage
 ### Database
 Data base is designed by following principles explained in ADRs below.
-Detailed model is available on <a href="database/db_schema.md">Database Schema</a> page.
-
 
 |ADR #| 	Title| 	Why |	Trade-offs 	| Link |
 |------|----------|-----|--------------|-----|	
 |04 |	One relational database and one file-storage DB |	Simplifies maintenance by reducing the number of databases, combining multiple domains into one relational DB.| Resumes need separate file storage.	May compromise modularity and separation of concerns between domains, leading to potential scaling or data management challenges later. However big scalability is not expected so we feel comfortable in making this decision.	|<a href="adr/adr04.md">ADR04</a>|
 |05 |	Split database by schema to decouple domains and improve security|	Improves fault-tolerance and security by separating candidate, employer, matching, and analytics data into schemas. |	More complex database management, requiring careful handling of schema-specific optimizations and inter-schema queries. |	<a href="adr/adr05.md">ADR05</a>|
 |06 |	Analytics as part of regular database| 	Simplifies architecture by embedding analytics within the regular database, avoiding real-time analytics complexity. |	May limit future analytics capabilities if real-time or advanced analytics are needed, and could add extra load to the operational database. However, it should be fairly easy to move this data to separate database if needed.|	<a href="adr/adr06.md">ADR06</a>|
+
+Detailed ER model is available on <a href="database/db_schema.md">Database Schema</a> page.
 
 ### Schema considerations
 
