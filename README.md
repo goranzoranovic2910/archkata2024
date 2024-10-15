@@ -10,33 +10,57 @@ We are a team of software engineers from Microsoft Serbia very passionate about 
 - [Goran Zoranovic](https://www.linkedin.com/in/goranzoranovic/)
 
 ## Table of contents
-- [Company overview](#company-overview)
-- [Requirements](#requirements)
-- [Identifying architecture characteristics](#identifying-architecture-characteristics)
-- [Domain analysis](#domain-analysis)
-- [Architecture](#architecture)
+- [Clear View Solution](#clear-view-solution)
+  - [Equi Hire Architects Team](#equi-hire-architects-team)
+  - [Table of contents](#table-of-contents)
+  - [Company overview](#company-overview)
+  - [Requirements](#requirements)
+  - [Identifying architecture characteristics](#identifying-architecture-characteristics)
+  - [Domain analysis](#domain-analysis)
+  - [Architecture](#architecture)
     - [Top level architecture](#top-level-architecture)
     - [Architecture Decision Records](#architecture-decision-records)
-- [AI Backend](#ai-backend)
-    - [AI Tips Service](#ai-tips-service)
+  - [AI Backend](#ai-backend)
+    - [AI Tips service](#ai-tips-service)
+      - [Flow diagram](#flow-diagram)
+      - [Sequence diagram](#sequence-diagram)
     - [Anonymization Service](#anonymization-service)
-    - [Matching Service](#matching-service)
-- [Integration](#integration)
-- [Unified API](#rest-api)
+      - [How the Anonymization Process Works](#how-the-anonymization-process-works)
+      - [Importance of LLM-Based Anonymization in Reducing Bias](#importance-of-llm-based-anonymization-in-reducing-bias)
+      - [Conclusion](#conclusion)
+    - [Matching service](#matching-service)
+      - [Triggering](#triggering)
+      - [Matching Process](#matching-process)
+      - [Skill Extraction](#skill-extraction)
+      - [Scoring Logic](#scoring-logic)
+  - [Integration](#integration)
+  - [Unified API](#unified-api)
     - [Candidate Endpoint](#candidate-endpoint)
+      - [Account Management](#account-management)
     - [Employer Endpoint](#employer-endpoint)
+      - [1. Overview](#1-overview)
+      - [2. Employer Registration and Management](#2-employer-registration-and-management)
+      - [3. Payment Processing](#3-payment-processing)
+      - [4. HR System Integration](#4-hr-system-integration)
+      - [5. Unified API CRUD Operations](#5-unified-api-crud-operations)
     - [Administrator Endpoint](#administrator-endpoint)
+      - [Administrator Endpoint Overview](#administrator-endpoint-overview)
     - [Reporting Endpoint](#reporting-endpoint)
-        - [Triggering data aggregation](#triggering-data-aggregation)
-- [Storage](#storage)
-   - [Database](#database)
-   - [Schema considerations](#schema-considerations)
-   - [File Storage](#file-storage)
-- [External services](#external-services)
-- [Additional considerations](#additional-considerations)
-   - [Evolvability](#evolvability)
-   - [Scalability](#scalability)
-   - [Premium Business Model](#premium-business-model)
+      - [1. Business Reporting](#1-business-reporting)
+      - [2. Service Review](#2-service-review)
+      - [API Endpoints Overview:](#api-endpoints-overview)
+      - [Triggering data aggregation](#triggering-data-aggregation)
+  - [Storage](#storage)
+    - [Database](#database)
+    - [Schema considerations](#schema-considerations)
+    - [File Storage](#file-storage)
+      - [Why File Storage is Essential](#why-file-storage-is-essential)
+      - [Conclusion](#conclusion-1)
+  - [External services](#external-services)
+  - [Additional considerations](#additional-considerations)
+    - [Evolvability](#evolvability)
+    - [Scalability](#scalability)
+    - [Premium Business model](#premium-business-model)
 
 ## Company overview
 
@@ -369,7 +393,7 @@ The Matching Service in ClearView is designed to process candidate resumes and j
 graph TD 
     A[Skill Extraction]
     B[AI Skill Matching]
-    C[Matching REST Endpoint]
+    C[Matching API Endpoint]
 
     C --> |invoke| A
     C --> |invoke| B
@@ -384,7 +408,7 @@ graph TD
     end
 ```
 
-**Matching REST Endpoint:** The main entry point to the Matching Service. It provides methods to:
+**Matching API Endpoint:** The main entry point to the Matching Service. It provides methods to:
 ```
 extractJobSkills(jobAdId)
 
