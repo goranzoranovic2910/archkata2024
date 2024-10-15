@@ -9,6 +9,7 @@ We are a team of software engineers from Microsoft Serbia very passionate about 
 - [Rastko Djordjevic](https://www.linkedin.com/in/rastko-djordjevic/)
 - [Goran Zoranovic](https://www.linkedin.com/in/goranzoranovic/)
 
+
 ## Table of contents
 - [Company overview](#company-overview)
 - [Requirements](#requirements)
