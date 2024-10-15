@@ -1,4 +1,4 @@
-### ADR 07: Analytics as Part of Regular Database
+### ADR 06: Analytics as Part of Regular Database
 
 - **Title**: Analytics as part of regular database
 - **Status**: Accepted
