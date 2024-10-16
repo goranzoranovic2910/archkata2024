@@ -10,33 +10,90 @@ We are a team of software engineers from Microsoft Serbia passionate about softw
 - [Goran Zoranovic](https://www.linkedin.com/in/goranzoranovic/)
 
 ## Table of contents
-- [Company overview](#company-overview)
-- [Requirements](#requirements)
-- [Identifying architecture characteristics](#identifying-architecture-characteristics)
-- [Domain analysis](#domain-analysis)
-- [Architecture](#architecture)
+- [Clear View Solution](#clear-view-solution)
+  - [Equi Hire Architects Team](#equi-hire-architects-team)
+  - [Table of contents](#table-of-contents)
+  - [Company overview](#company-overview)
+  - [Requirements](#requirements)
+  - [Identifying architecture characteristics](#identifying-architecture-characteristics)
+  - [Domain analysis](#domain-analysis)
+  - [Architecture](#architecture)
     - [Top level architecture](#top-level-architecture)
     - [Architecture Decision Records](#architecture-decision-records)
-- [AI Backend](#ai-backend)
-    - [AI Tips Service](#ai-tips-service)
+  - [AI Backend](#ai-backend)
+    - [AI Tips service](#ai-tips-service)
+      - [Flow diagram](#flow-diagram)
+      - [Sequence diagram](#sequence-diagram)
+    - [Analysis of LLM Usage for AI-Tips](#analysis-of-llm-usage-for-ai-tips)
+      - [Pros](#pros)
+      - [Cons](#cons)
+      - [Related ADRs](#related-adrs)
     - [Anonymization Service](#anonymization-service)
-    - [Matching Service](#matching-service)
-- [Integration](#integration)
-- [Unified API](#rest-api)
+      - [How the Anonymization Process Works](#how-the-anonymization-process-works)
+      - [Importance of LLM-Based Anonymization in Reducing Bias](#importance-of-llm-based-anonymization-in-reducing-bias)
+      - [Conclusion](#conclusion)
+    - [Matching service](#matching-service)
+      - [Matching API Endpoint](#matching-api-endpoint)
+      - [Triggering](#triggering)
+      - [Matching Process](#matching-process)
+      - [Matching API](#matching-api)
+        - [Get Job for Candidate](#get-job-for-candidate)
+        - [Get Job Skills](#get-job-skills)
+        - [Score Candidate Job Match](#score-candidate-job-match)
+        - [Store Matching Score](#store-matching-score)
+      - [Skill extraction](#skill-extraction)
+    - [Scoring Logic](#scoring-logic)
+        - [Cosine Similarity](#cosine-similarity)
+      - [LLM Similarity](#llm-similarity)
+  - [Integration](#integration)
+  - [Unified API](#unified-api)
     - [Candidate Endpoint](#candidate-endpoint)
+      - [Related ADRs](#related-adrs-1)
+      - [Account Management](#account-management)
+        - [Register Candidate](#register-candidate)
+        - [Login Candidate](#login-candidate)
+        - [Get Candidate Profile](#get-candidate-profile)
+        - [Update Candidate Profile](#update-candidate-profile)
+      - [Resume Management](#resume-management)
+        - [Upload Resume](#upload-resume)
+        - [Get Resume](#get-resume)
+        - [Delete Resume](#delete-resume)
+      - [Anonymized Resume Management](#anonymized-resume-management)
+        - [Upload Anonymized Resume](#upload-anonymized-resume)
+        - [Get Anonymized Resume](#get-anonymized-resume)
+        - [Delete Anonymized Resume](#delete-anonymized-resume)
+      - [AI Tips](#ai-tips)
+        - [Get Resume Tips](#get-resume-tips)
+      - [Job Matching](#job-matching)
+        - [Get Job Matches](#get-job-matches)
+        - [Retrieve filtered matches](#retrieve-filtered-matches)
+        - [Get Job Details](#get-job-details)
+      - [Job Applications](#job-applications)
+        - [Apply for Job](#apply-for-job)
     - [Employer Endpoint](#employer-endpoint)
+      - [1. Overview](#1-overview)
+      - [2. Employer Registration and Management](#2-employer-registration-and-management)
+      - [3. Payment Processing](#3-payment-processing)
+      - [4. HR System Integration](#4-hr-system-integration)
+      - [5. Unified API CRUD Operations](#5-unified-api-crud-operations)
     - [Administrator Endpoint](#administrator-endpoint)
+      - [Administrator Endpoint Overview](#administrator-endpoint-overview)
     - [Reporting Endpoint](#reporting-endpoint)
-        - [Triggering data aggregation](#triggering-data-aggregation)
-- [Storage](#storage)
-   - [Database](#database)
-   - [Schema considerations](#schema-considerations)
-   - [File Storage](#file-storage)
-- [External services](#external-services)
-- [Additional considerations](#additional-considerations)
-   - [Evolvability](#evolvability)
-   - [Scalability](#scalability)
-   - [Premium Business Model](#premium-business-model)
+      - [1. Business Reporting](#1-business-reporting)
+      - [2. Service Review](#2-service-review)
+      - [API Endpoints Overview:](#api-endpoints-overview)
+      - [Triggering data aggregation](#triggering-data-aggregation)
+  - [Storage](#storage)
+    - [Database](#database)
+    - [Schema considerations](#schema-considerations)
+    - [File Storage](#file-storage)
+      - [Why File Storage is Essential](#why-file-storage-is-essential)
+      - [Conclusion](#conclusion-1)
+  - [External services](#external-services)
+  - [Additional considerations](#additional-considerations)
+    - [Evolvability](#evolvability)
+    - [Scalability](#scalability)
+    - [Premium Business model](#premium-business-model)
 
 ## Company overview
 
@@ -156,7 +213,6 @@ We landed on next domains:
 |------|----------|-----|--------------|-------|	
 |03 |	Organize components per domain| 	Organizes ClearView components into domain-specific groups (candidate, employer, AI backend, etc.) to separate concerns effectively and improve maintainability and testability.|	Requires managing inter-domain communication and potentially increasing complexity if domains grow interdependent. 	| <a href="adr/adr03.md">ADR03</a>|
 
-
 ## Architecture
 ### Top level architecture 
 
@@ -166,7 +222,7 @@ graph TD
     I[Reporting Endpoint]    
     A --> C[Candidate Endpoint]
     C --> S[AI Tips Service]
-    C-->T[Anonymization Service]    
+    C --> T[Anonymization Service]    
     A --> D[Employer Endpoint]
     A --> H[Administrator Endpoint]  
     C --> E[Matching Service]
@@ -174,18 +230,16 @@ graph TD
     C --> J[(ClearView)]
     D --> J
     E --> J
-    I-->J    
+    I --> J    
     H --> J
     C --> M[Resume/Ads File Storage]
     D --> N[Payment Processor]
     I --> O[Survey Provider]    
 
-    
     subgraph Storage
         J
         M
     end
-
 
     subgraph ClearView Unified API
         C
@@ -202,36 +256,22 @@ graph TD
 <div align="center"><i>Top Level Architecture - Component Diagram</i></div>
 <br/>
 
-- ClearView Frontend - top layer using unified APIs which are hiding complexity of the system below.
-
-- ClearView unified API - top level abstraction to be used for integration with HR apps. Clear view can have its own front end hooking up to this layer.
-
-- Candidate Endpoint - unified API component covering methods needed for Candidate flow.
-
-- Employer Endpoint - unified API component covering methods for Employer flow.
-
-- Administrator Endpoint - unified API component covering methods for Admin flow.
-
-- Reporting Endpoint - unified API component covering methods needed for Monthly reporting.
-
-- Anonymization Service - Service which is creating anonymized version of resume.
-
-- AI Tips Service - Service providing tips for the Candidate resume.
-
-- Matching Service - Service making actual matches based on skills extracted from job ads and resumes.
-
-- Resume/Ads File Storage - Storage used for 
-files.
-
-- ClearView database - Relational database for rest of the data.
-
-- External services (Payment processor and Survey Provider)
-
+- **ClearView Frontend** - top layer using unified APIs which are hiding complexity of the system below.
+- **ClearView unified API** - top level abstraction to be used for integration with HR apps. Clear view can have its own front end hooking up to this layer.
+- **Candidate Endpoint** - unified API component covering methods needed for Candidate flow.
+- **Employer Endpoint** - unified API component covering methods for Employer flow.
+- **Administrator Endpoint** - unified API component covering methods for Admin flow.
+- **Reporting Endpoint** - unified API component covering methods needed for Monthly reporting.
+- **Anonymization Service** - Service which is creating anonymized version of resume.
+- **AI Tips Service** - Service providing tips for the Candidate resume.
+- **Matching Service** - Service making actual matches based on skills extracted from job ads and resumes.
+- **Resume/Ads File Storage** - Storage used for files.
+- **ClearView database** - Relational database for rest of the data.
+- **External services** - Payment processor and Survey Provider.
 
 ### Architecture Decision Records
 
 Here is the condensed list of all ADRs we made during the process to came up with architecture we designed. Full ADRs can be found through links in the table.
-
 
 | ADR # | Title                                                                                                      | Why                                                                                                                                                                            | Trade-offs                                                                                                                                                                                                                                                                                                    | Link to Detailed ADR                             |
 | ----- | ---------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
@@ -251,6 +291,7 @@ Here is the condensed list of all ADRs we made during the process to came up wit
 
 Tips are generated based on uploaded resume, with a goal to improve quality of it and help candidate in finding a job.
 This will be achieved through improvements in:
+
 - Quantifying results
 - Performance focus evaluation
 - Skill Level Estimation - this will also help our skill extraction system
@@ -308,22 +349,23 @@ sequenceDiagram
 <div align="center"><i>AI Tips - Sequence Diagram</i></div>
 <br/>
 
-**Analysis of LLM Usage for AI-Tips**
+### Analysis of LLM Usage for AI-Tips
 
-**Pros:**
+#### Pros
 
-- Advanced language understanding: LLMs can comprehend complex resume structures and extract relevant information accurately.
-- Contextual awareness: LLMs can provide suggestions based on industry standards, job market trends, and best practices in resume writing.
-- Flexibility: LLMs can adapt to various resume formats and styles without requiring specific templates.
-- Continuous improvement: As LLMs are updated, the quality of suggestions can improve without significant changes to the system architecture.
-- Multilingual support: LLMs can potentially provide tips for resumes in multiple languages.
+- **Advanced language understanding**: LLMs can comprehend complex resume structures and extract relevant information accurately.
+- **Contextual awareness**: LLMs can provide suggestions based on industry standards, job market trends, and best practices in resume writing.
+- **Flexibility**: LLMs can adapt to various resume formats and styles without requiring specific templates.
+- **Continuous improvement**: As LLMs are updated, the quality of suggestions can improve without significant changes to the system architecture.
+- **Multilingual support**: LLMs can potentially provide tips for resumes in multiple languages.
 
-**Cons:**
-- Computational cost: Processing resumes through LLMs can be resource-intensive and potentially expensive, especially for large volumes of requests.
-- Latency: The time required to generate suggestions using LLMs might be higher compared to rule-based systems, potentially affecting user experience.
-- Inconsistency: LLMs may sometimes produce inconsistent or irrelevant suggestions, requiring additional validation or filtering mechanisms.
+#### Cons
 
-**Related ADRs**
+- **Computational cost**: Processing resumes through LLMs can be resource-intensive and potentially expensive, especially for large volumes of requests.
+- **Latency**: The time required to generate suggestions using LLMs might be higher compared to rule-based systems, potentially affecting user experience.
+- **Inconsistency**: LLMs may sometimes produce inconsistent or irrelevant suggestions, requiring additional validation or filtering mechanisms.
+
+#### Related ADRs
 
 |ADR #| 	Title| 	Why |	Trade-offs 	| Link |
 |------|----------|-----|--------------|------|
@@ -342,7 +384,7 @@ One of the core features of ClearView is its ability to **reduce bias** in the h
    Upon receiving the resume, ClearView’s **Anonymization Service** is automatically triggered. The service, utilizing **Large Language Models (LLMs)**, intelligently analyzes the resume to detect and anonymize sensitive personal information. These advanced models allow the system to:
    - Identify personal identifiers such as **names**, **contact details**, **gender**, **date of birth**, and **photographs**, even if presented in varied formats or contexts.
    - Maintain the **semantic integrity** of the resume, ensuring that anonymized resumes still convey the full scope of a candidate’s professional experience and skills.
-   
+
    The LLM’s ability to understand context ensures that the anonymization process is thorough and adaptable, handling diverse resume formats and terminology with ease. While the LLM removes personal details, it preserves critical information such as **work experience**, **skills**, **education**, and **certifications**, ensuring that the anonymized resume remains informative.
 
 3. **Compelling Anonymized Resume Creation**  
@@ -375,7 +417,6 @@ flowchart TD
 
 In ClearView, the **Anonymization Service**, powered by **LLMs**, plays a pivotal role in ensuring **fair and unbiased hiring practices**. By utilizing the capabilities of Large Language Models to intelligently anonymize resumes and generate a consistent, professional presentation, ClearView enables employers to make objective, data-driven decisions. The combination of LLM-powered anonymization and skill-matching data ensures that every candidate is evaluated based on their qualifications alone, fostering a more diverse and inclusive recruitment process.
 
-
 ### Matching service
 
 The Matching Service in ClearView is designed to process candidate resumes and job advertisements to extract skills and match them, providing a score that indicates the suitability of a candidate for a job. The service is built with flexibility in mind, using **Cosine Similarity** as the default matching algorithm, but allowing for other strategies such as **LLM-based matching** if needed.
@@ -384,7 +425,7 @@ The Matching Service in ClearView is designed to process candidate resumes and j
 graph TD 
     A[Skill Extraction]
     B[AI Skill Matching]
-    C[Matching REST Endpoint]
+    C[Matching API Endpoint]
 
     C --> |invoke| A
     C --> |invoke| B
@@ -401,19 +442,12 @@ graph TD
 <div align="center"><i>Matching Service - Component Diagram</i></div>
 <br/>
 
-**Matching REST Endpoint:** The main entry point to the Matching Service. It provides methods to:
-```
-extractJobSkills(jobAdId)
+#### Matching API Endpoint
 
-extractCandidateSkills(candidateId)
+The main entry point to the Matching Service. It provides methods to:
 
-getAllMatchingData(jobAdId)
-
-getMatchingData(candidateId, jobAdId)
-```
-**Skill Extraction:** This component takes resumes and job descriptions and extracts skills from them. These skills are stored in the ClearView database for future use in matching.
-
-**AI Skill Matching:** This component compares candidate skills with job ad skills using Cosine Similarity as the default algorithm. The system calculates a matching score (1-100%) based on the similarity of the skills.
+- **Skill Extraction:** This component takes resumes and job descriptions and extracts skills from them. These skills are stored in the ClearView database for future use in matching.
+- **AI Skill Matching:** This component compares candidate skills with job ad skills using Cosine Similarity as the default algorithm. The system calculates a matching score (1-100%) based on the similarity of the skills.
 
 #### Triggering
 Matching is done per job advertisement once it is closed to optimize cost. It could be also triggered on demand if business needs are such. We want to avoid multiple passes and redundant processes this way. 
@@ -432,96 +466,57 @@ graph LR
 <div align="center"><i>Matching Process - Flow Diagram</i></div>
 <br/>
 
-- Get Candidate Skills: Fetch the extracted skills for a candidate based on their CandidateId. Output is a map of skills.
-Example:
-``` {Java: Expert, Python: Intermediate}```
+#### Matching API
 
-- Get Job for Candidate: Retrieve the list of jobs that the candidate applied to. The job data includes the job requirements and expected skills.
-- Get Job Skills: Extract the required skills for the job from the JobAdId. Output is a map of skills.
-Example: ```{Java: Expert, SQL: Intermediate}```
+##### Get Job for Candidate
 
-- Score Candidate Job Match: Compare the candidate’s skills with the job’s required skills. Use Cosine Similarity to compute a score (1-100%) that represents the candidate’s fit for the job.
-- Store Matching Score: Save the calculated score in the database, linking the CandidateId, JobAdId, and the score.
-Example: ```{CandidateId: 123, JobAdId: 456, Score: 85} ```
+Retrieve the list of jobs that the candidate applied to. The job data includes the job requirements and expected skills.
 
-#### Skill Extraction
+```
+GET api/matching/candidates/{candidate_id}/jobs
+```
+
+##### Get Job Skills
+
+Extract the required skills for the job from the `job_id`. Output is a map of skills. Example: `{Java: Expert, SQL: Intermediate}`
+
+```
+GET api/matching/jobs/{job_id}/skills
+```
+
+##### Score Candidate Job Match
+
+Compare the candidate’s skills with the job’s required skills. Use Cosine Similarity to compute a score (1-100%) that represents the candidate’s fit for the job.
+
+```
+GET api/matching/candidates/{candidate_id}/jobs/{job_id}/score
+```
+
+##### Store Matching Score
+
+Save the calculated score in the database, linking the CandidateId, JobAdId, and the score. Example: `{candidate_id: 123, job_id: 456, score: 85}`
+
+```
+PUT api/matching/candidates/{candidate_id}/jobs/{job_id}/score
+```
+
+#### Skill extraction
 
 Skill extraction is triggered before matching to gather required skills from job add and candidate skills from resume.
-Extraction needs to be done using AI model, in our case LLM which transforms resume or add into map of skill descriptions.
+Extraction needs to be done using AI model, in our case LLM which transforms resume or add into map of skill descriptions. [More details](apis/skills_extraction.md)
 
-Example :
-``` json
-{ 
-    "Java": "Expert", 
-    "SQL": "Intermediate", 
-}
+Fetch the extracted skills for a candidate based on their CandidateId. Output is a map of skills. Example: `{Java: Expert, Python: Intermediate}`
+
 ```
-
-``` mermaid
-graph TD
-    C[Matching Endpoint]
-    B[AI Skill Matching]
-    D[(ClearView Matching Schema)]
-    C --> |invoke| A
-    C --> |invoke| B
-    B --> D
-    C --> D
-    subgraph Matching Service
-        C
-        B
-        subgraph A[Skill Extraction]
-            E[Resume/Ad Processing]
-            F[Skill Identification]
-            E --> F
-        end
-        A --> D
-    end
-    H[AI Services]
-    I[(Resume/Ads File Storage)]
-    E --> |read| I
-    F --> |request| H
-    H --> |response| F
-```
-<div align="center"><i>Skill extraction - Component Diagram</i></div>
-<br/>
-
-``` mermaid
-classDiagram
-    %% Skill Extraction Component
-    class SkillExtractor {
-        +extractSkills(documentId: string) CategorizedSkills
-    }
-
-    class ResumeAdProcessor {
-        +processDocument(documentId: string) ProcessedDocument
-    }
-
-    class SkillIdentifier {
-        +identifySkills(processedDocument: ProcessedDocument) IdentifiedSkills
-    }
-
-    %% External Services
-    class AIService {
-        +extractSkills(text: string) Promise~ExtractedSkills~
-    }
-
-    class FileStorage {
-        +getDocument(documentId: string) RawDocument
-    }
-
-    %% Relationships (vertical flow)
-    SkillExtractor --> ResumeAdProcessor : uses
-    ResumeAdProcessor --> FileStorage : uses
-    SkillExtractor --> SkillIdentifier : uses
-    SkillIdentifier --> AIService : uses
+GET api/matching/candidates/{candidate_id}/skills
 ```
 <div align="center"><i>Skill extraction - Class Diagram</i></div>
 <br/>
 
-#### Scoring Logic
+### Scoring Logic
 Scoring candidates against job ads is a complex task, with many potential approaches. Given ClearView’s emphasis on cost-efficiency, we favor solutions that are cost-effective while providing the flexibility to adopt different strategies.
 
-**Cosine Similarity:**
+##### Cosine Similarity
 
 Advantages:
 - Low cost to run and implement.
@@ -531,11 +526,14 @@ Advantages:
 Disadvantages:
 - Limited understanding of nuanced relationships between skills.
 
-**LLM Similarity:**
+#### LLM Similarity
 
 Advantages:
+
 - Can capture more complex relationships between skills and job requirements (e.g., inferred skills, context).
+
 Disadvantages:
+
 - Expensive to run and can introduce latency.
 - May “hallucinate” results and lack reliability in some cases.
 
@@ -670,342 +668,153 @@ graph TD
 | 08    | Use Third party solution for Survey and Payment | There are good existing solutions for this problem so we can reuse and reduce costs.                 | Hard to customize and extend, but no maintenance and cost is low.                                                                                                                            | <a href="adr/adr08.md">ADR08</a> |
 
 ## Unified API
+
 ### Candidate Endpoint
 
-**Related ADRs**
+#### Related ADRs
 
 | ADR # | Title                               | Why                                                                                                                                                                            | Trade-offs                                                                                                                                                                                   | Link                             |
 | ----- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
 | 03    | Organize components per domain      | Organizes ClearView components into domain-specific groups (candidate, employer, matching, etc.) to separate concerns effectively and improve maintainability and testability. | Requires managing inter-domain communication and potentially increasing complexity if domains grow interdependent.                                                                           | <a href="adr/adr03.md">ADR03</a> |
 
-
 #### Account Management
-Register Candidate
-- POST /api/candidates/register
 
-Request Body:
-``` json
-  {
-    "email": "string",
-    "password": "string",
-    "firstName": "string",
-    "lastName": "string",
-    "phoneNumber": "string"
-  }
+##### Register Candidate
+
 ```
-```
-Response: (201 Created)
-```
-``` json
-  {
-    "id": "string",
-    "email": "string",
-    "firstName": "string",
-    "lastName": "string",
-    "createdAt": "string (ISO 8601 date)"
-  }
+POST /api/candidates/register
 ```
 
-Login Candidate
-- POST /api/candidates/login
-Request Body:
-``` json
-  {
-    "email": "string",
-    "password": "string"
-  }
+The `Register Candidate` method allows a new candidate to create an account by providing their email, password, first name, last name, and phone number. Upon successful registration, the candidate's details are stored, and a unique candidate ID is generated. The response includes the candidate's ID, email, first name, last name, and the account creation timestamp in ISO 8601 format. For more details please visit [candidate API specs](/apis/candidate.md).
+
+##### Login Candidate
+
 ```
-```
-Response: (200 OK)
-```
-``` json
-  {
-    "token": "string",
-    "expiresIn": "number"
-  }
+POST /api/candidates/login
 ```
 
-Get Candidate Profile
-- GET /api/candidates/profile
-```
-Headers:
-Authorization: Bearer {token}
-Response: (200 OK)
-```
-``` json
-  {
-    "id": "string",
-    "email": "string",
-    "firstName": "string",
-    "lastName": "string",
-    "phoneNumber": "string"
-  }
-````
+The `Login Candidate` method allows a registered candidate to log in by providing their credentials. Upon successful authentication, the candidate can access subsequent APIs. The specific method of authentication and session management may vary depending on the implementation decision, and other types of authentication can be used as an implementation detail. For more details please visit [candidate API specs](/apis/candidate.md).
 
-Update Candidate Profile
-- PUT /api/candidates/profile
+##### Get Candidate Profile
+
 ```
-Headers:
-Authorization: Bearer {token}
-Request Body:
-```
-``` json
-  {
-    "firstName": "string",
-    "lastName": "string",
-    "phoneNumber": "string"
-  }
+GET /api/candidates/profile
 ```
 
-Response: (200 OK)
+The Get Candidate Profile method allows an authenticated candidate to retrieve their profile information. The request must include an authorization header with the candidate's token. Upon successful retrieval, the response includes the candidate's ID, email, first name, last name, and phone number. For more details, please visit [candidate API specs](/apis/candidate.md).
 
-``` json
-  {
-    "id": "string",
-    "email": "string",
-    "firstName": "string",
-    "lastName": "string",
-    "phoneNumber": "string",
-    "updatedAt": "string (ISO 8601 date)"
-  }
+##### Update Candidate Profile
+
+```
+PUT /api/candidates/profile
 ```
 
-Resume Management
-Upload Resume
-- POST /api/candidates/resume
-```
-Headers:
-Authorization: Bearer {token}
-Content-Type: multipart/form-data
-Request Body:
-- file: (binary)
-Response: (201 Created)
-```
-``` json
-  {
-    "id": "string",
-    "fileName": "string",
-    "uploadDate": "string (ISO 8601 date)",
-    "fileSize": "number"
-  }
-```
+The `Update Candidate Profile` method allows an authenticated candidate to update their profile information. The request must include an authorization header with the candidate's token. The request body should contain the fields to be updated, such as `firstName`, `lastName`, and `phoneNumber`. Upon successful update, the response includes the candidate's ID, email, first name, last name, phone number, and the timestamp of the last update in ISO 8601 format. For more details, please visit [candidate API specs](/apis/candidate.md).
 
-Get Resume
-- GET /api/candidates/resume
-```
-Headers:
-Authorization: Bearer {token}
-Response: (200 OK)
-```
-``` json
-  {
-    "id": "string",
-    "fileName": "string",
-    "uploadDate": "string (ISO 8601 date)",
-    "fileSize": "number",
-    "downloadUrl": "string"
-  }
-```
+#### Resume Management
 
-Delete Resume
-- DELETE /api/candidates/resume
-```
-Headers:
-Authorization: Bearer {token}
-Response: (200 OK)
-```
-``` json
-  {
-    "message": "Resume deleted successfully"
-  }
-```
+##### Upload Resume
 
-Anonymized Resume Management
-Upload Anonimized Resume
-- POST /api/candidates/anonymized
-```
-Headers:
-Authorization: Bearer {token}
-Content-Type: multipart/form-data
-Request Body:
-- file: (binary)
-Response: (201 Created)
-```
-``` json
-  {
-    "id": "string",
-    "fileName": "string",
-    "uploadDate": "string (ISO 8601 date)",
-    "fileSize": "number"
-  }
-```
-
-Get Anonimized Resume
-- GET /api/candidates/anonimized
-```
-Headers:
-Authorization: Bearer {token}
-Response: (200 OK)
-```
-``` json
-  {
-    "id": "string",
-    "fileName": "string",
-    "uploadDate": "string (ISO 8601 date)",
-    "fileSize": "number",
-    "downloadUrl": "string"
-  }
-```
-
-Delete Anonimized Resume
-- DELETE /api/candidates/anonymized
-```
-Headers:
-Authorization: Bearer {token}
-Response: (200 OK)
-```
-``` json
-  {
-    "message": "Resume deleted successfully"
-  }
-```
-
-AI Tips
-Get Resume Tips
-- GET /api/candidates/resume/tips
-```
-Headers:
-Authorization: Bearer {token}
-Response: (200 OK)
-```
-``` json
-  {
-    "resumeId": "string",
-    "tips": [
-      {
-        "category": "string",
-        "suggestion": "string",
-        "priority": "number"
-      }
-    ],
-    "overallScore": "number"
-  }
-```
-
-Job Matching
-Get Job Matches
-- GET /api/candidates/jobs/matches
-```
-Headers:
-Authorization: Bearer {token}
-Query Parameters:
-page: number
-limit: number
-Response: (200 OK)
-```
-``` json
-  {
-    "totalMatches": "number",
-    "page": "number",
-    "limit": "number",
-    "matches": [
-      {
-        "jobId": "string",
-        "title": "string",
-        "company": "string",
-        "location": "string",
-        "matchScore": "number",
-        "postedDate": "string (ISO 8601 date)"
-      }
-    ]
-  }
-```
-
-Retrieve filtered matches
-- GET /api/candidates/jobs/matches/filter
-```
-Headers:
-Authorization: Bearer {token}
-Query Parameters:
-title: string (optional)
-company: string (optional)
-location: string (optional)
-minMatchScore: number (optional)
-maxMatchScore: number (optional)
-fromDate: string (ISO 8601 date, optional)
-toDate: string (ISO 8601 date, optional)
-page: number (default: 1)
-limit: number (default: 20)
-Response: (200 OK)
-```
-``` json
-  {
-    "totalMatches": "number",
-    "page": "number",
-    "limit": "number",
-    "matches": [
-      {
-        "jobId": "string",
-        "title": "string",
-        "company": "string",
-        "location": "string",
-        "matchScore": "number",
-        "postedDate": "string (ISO 8601 date)"
-      }
-    ],
-    "appliedFilters": {
-      "title": "string",
-      "company": "string",
-      "location": "string",
-      "minMatchScore": "number",
-      "maxMatchScore": "number",
-      "fromDate": "string (ISO 8601 date)",
-      "toDate": "string (ISO 8601 date)"
-    }
-  }
-```
-
-Get Job Details
-- GET /api/candidates/jobs/{jobId}
-```
-Headers:
-Authorization: Bearer {token}
-Path Parameters:
-jobId: string
-Response: (200 OK)
-```
-``` json
-  {
-    "id": "string",
-    "title": "string",
-    "company": "string",
-    "location": "string",
-    "description": "string",
-    "requirements": ["string"],
-    "postedDate": "string (ISO 8601 date)",
-    "matchScore": "number"
-  }
-```
-
-Job Applications
-Apply for Job
-- POST /api/candidates/jobs/{jobId}/apply
 ``` 
-Headers:
-Authorization: Bearer {token}
-Path Parameters:
-jobId: string
-Response: (201 Created)
+POST /api/candidates/resume
 ```
 
-``` json
-  {
-    "applicationId": "string",
-    "jobId": "string",
-    "applicationDate": "string (ISO 8601 date)",
-    "status": "string"
-  }
+The `Upload Resume` method allows an authenticated candidate to upload their resume. The request must include an authorization header with the candidate's token and use `multipart/form-data` for the request body. The request body should contain the resume file as a binary attachment. Upon successful upload, the response includes the resume's ID, file name, upload date in ISO 8601 format, and file size. For more details, please visit [candidate API specs](/apis/candidate.md).
+
+##### Get Resume
+
+``` 
+GET /api/candidates/resume
 ```
+
+The `Get Resume` method allows an authenticated candidate to retrieve their uploaded resume. The request must include an authorization header with the candidate's token. Upon successful retrieval, the response includes the resume's ID, file name, upload date in ISO 8601 format, file size, and a download URL for the resume file. For more details, please visit [candidate API specs](/apis/candidate.md).
+
+##### Delete Resume
+
+```
+DELETE /api/candidates/resume
+```
+
+The `Delete Resume` method allows an authenticated candidate to delete their uploaded resume. The request must include an authorization header with the candidate's token. Upon successful deletion, the response includes a message confirming that the resume was deleted successfully. For more details, please visit [candidate API specs](/apis/candidate.md).
+
+
+#### Anonymized Resume Management
+
+##### Upload Anonymized Resume
+
+```
+POST /api/candidates/anonymized
+```
+
+The `Upload Anonymized Resume` method allows an authenticated candidate to upload an anonymized version of their resume. The request must include an authorization header with the candidate's token and use `multipart/form-data` for the request body. The request body should contain the anonymized resume file as a binary attachment. Upon successful upload, the response includes the anonymized resume's ID, file name, upload date in ISO 8601 format, and file size. For more details, please visit [candidate API specs](/apis/candidate.md).
+
+
+##### Get Anonymized Resume
+
+```
+GET /api/candidates/anonymized
+```
+
+The `Get Anonymized Resume` method allows an authenticated candidate to retrieve their uploaded anonymized resume. The request must include an authorization header with the candidate's token. Upon successful retrieval, the response includes the anonymized resume's ID, file name, upload date in ISO 8601 format, file size, and a download URL for the resume file. For more details, please visit [candidate API specs](/apis/candidate.md).
+
+
+##### Delete Anonymized Resume
+
+```
+DELETE /api/candidates/anonymized
+```
+
+The `Delete Anonymized Resume` method allows an authenticated candidate to delete their uploaded anonymized resume. The request must include an authorization header with the candidate's token. Upon successful deletion, the response includes a message confirming that the anonymized resume was deleted successfully. For more details, please visit [candidate API specs](/apis/candidate.md).
+
+
+
+#### AI Tips
+
+##### Get Resume Tips
+
+```
+GET /api/candidates/resume/tips
+```
+
+The `Get Resume Tips` method allows an authenticated candidate to receive tips for improving their resume. The request must include an authorization header with the candidate's token. Upon successful retrieval, the response includes the resume's ID and a list of tips. Each tip contains a category, suggestion, and priority level. For more details, please visit [candidate API specs](/apis/candidate.md).
+
+#### Job Matching
+
+##### Get Job Matches
+
+```
+GET /api/candidates/jobs/matches
+```
+
+The `Get Job Matches` method allows an authenticated candidate to retrieve a list of job matches based on their profile and preferences. The request must include an authorization header with the candidate's token. Query parameters such as `page` and `limit` can be used to paginate the results. Upon successful retrieval, the response includes the total number of matches, the current page, the limit per page, and a list of job matches. Each job match contains details such as job ID, title, company, location, match score, and posted date in ISO 8601 format. For more details, please visit [candidate API specs](/apis/candidate.md).
+
+##### Retrieve filtered matches
+
+```
+GET /api/candidates/jobs/matches/filter
+```
+
+The `Retrieve Filtered Matches` method allows an authenticated candidate to retrieve a list of job matches based on specific filters. The request must include an authorization header with the candidate's token. Query parameters can be used to filter the results, such as `title`, `company`, `location`, `minMatchScore`, `maxMatchScore`, `fromDate`, `toDate`, `page`, and `limit`. Upon successful retrieval, the response includes the total number of matches, the current page, the limit per page, and a list of job matches. Each job match contains details such as job ID, title, company, location, match score, and posted date in ISO 8601 format. For more details, please visit [candidate API specs](/apis/candidate.md).
+
+
+##### Get Job Details
+
+```
+GET /api/candidates/jobs/{jobId}
+```
+
+The `Get Job Details` method allows an authenticated candidate to retrieve detailed information about a specific job. The request must include an authorization header with the candidate's token and a path parameter specifying the job ID. Upon successful retrieval, the response includes detailed information about the job, such as job ID, title, company, location, description, requirements, posted date in ISO 8601 format, and match score. For more details, please visit [candidate API specs](/apis/candidate.md).
+
+#### Job Applications
+
+##### Apply for Job
+
+```
+POST /api/candidates/jobs/{jobId}/apply
+```
+
+The `Apply for Job` method allows an authenticated candidate to apply for a specific job. The request must include an authorization header with the candidate's token and a path parameter specifying the job ID. Upon successful application, the response includes a 201 Created status and a JSON object containing the application ID, job ID, application date in ISO 8601 format, and the application status. For more details, please visit [candidate API specs](/apis/candidate.md).
+
 ### Employer Endpoint
 
 #### 1. Overview
@@ -1052,6 +861,7 @@ graph TD
 | 03    | Organize components per domain      | Organizes ClearView components into domain-specific groups (candidate, employer, matching, etc.) to separate concerns effectively and improve maintainability and testability. | Requires managing inter-domain communication and potentially increasing complexity if domains grow interdependent.                                                                           | <a href="adr/adr03.md">ADR03</a> |
 
 #### 2. Employer Registration and Management
+
 The Employer system will handle the following:
 Employer Registration:
 New employers will register using the platform.
@@ -1062,7 +872,9 @@ Employers will have a dashboard where they can view job postings, select candida
 Employer Job Ad Management:
 Employers will create, update, or delete job ads through the system.
 The AI system will use job ads to match with candidate profiles, ensuring anonymization and alignment with S.M.A.R.T. goals.
+
 #### 3. Payment Processing
+
 The Payment System will be a critical part of ClearView to ensure employers pay for services and unlock candidate profiles.
 - Payment Triggers:
 Employers can browse anonymized candidates, but to unlock full profiles and contact information, they need to make a payment.
@@ -1073,6 +885,7 @@ All payment transactions will be securely stored, and receipts will be issued vi
 - Subscription Plans:
 Employers can subscribe to monthly plans, giving them access to a specific number of candidate profiles or advanced services.
 Plan management (viewing/upgrading/downgrading subscriptions) will be available through the employer's dashboard.
+
 #### 4. HR System Integration
 
 ClearView integrates with HR systems in two main ways, offering flexibility for different business needs:
@@ -1084,189 +897,190 @@ ClearView integrates with HR systems in two main ways, offering flexibility for 
    For organizations with existing HR systems, ClearView offers integration via a **Service API**, allowing seamless communication between HR platforms and ClearView. This API enables organizations to manage job ads, retrieve matched candidates, and synchronize recruitment data without manual intervention. The API provides access to ClearView's core features such as job management, candidate matching, and anonymized resume retrieval, making it ideal for larger companies needing custom integration.
 
 Both methods ensure that ClearView can fit into different organizational structures—offering a simple app-based solution for small businesses, while also supporting complex HR workflows through the Service API for larger enterprises. An ADR detailing this integration has been created for further reference.
+
 #### 5. Unified API CRUD Operations
+
 The API will enable the following operations:
-- Employer:
-```
-POST /employer: Register a new employer and autofill company details.
-GET /employer/{id}: Retrieve employer details, including job ads and payment history.
-PUT /employer/{id}: Update employer information.
-DELETE /employer/{id}: Deactivate employer profile.
-GET /employer/{employer_id}/{candidate_id}/anonimized : Download anonymized candidate resume.
-GET /employer/{employer_id}/candidates/{candidate_id}/resume: Download unlocked candidate resume.
-```
-- Job Ads:
-```
-POST /employer/{id}/job: Create a new job ad.
-GET /employer/{id}/jobs: Retrieve all job ads for an employer.
-PUT /employer/{id}/job/{job_id}: Update a job ad.
-DELETE /employer/{id}/job/{job_id}: Remove a job ad.
+
+##### Employer
+
+###### Register employer
 
 ```
-- Payments:
-
-```
-POST /employer/{id}/payment: Make a payment to unlock candidate profiles or services.
-GET /employer/{id}/payments: Retrieve payment history for an employer.
+POST /api/employer
 ```
 
-- HR System Integration:
-```
-POST /employer/{id}/hr-integration: Integrate ClearView with an HR system.
-GET /employer/{id}/hr-sync: Synchronize job ads with HR system.
-```
-### Administrator Endpoint
+The `Register Employer` method allows a new employer to create an account and autofill company details. Upon successful registration, the employer's information is stored, and a unique employer ID is generated. The response includes the employer's ID and details.
 
-#### Administrator Endpoint Overview
-The Administrator Endpoint is designed to provide system administrators with special privileges for managing users, candidates, employers, and the skill-matching configuration. This includes the ability to update hire statuses, modify user data, and change the matching strategy (e.g., switch between Cosine Similarity and LLM-based matching).
+###### Retrieve Employer Details
 
-**Related ADRs**
+```
+GET /api/employer/{employer_id}
+```
+
+The `Retrieve Employer Details` method allows an employer to view their account information, including job ads and payment history.
+
+###### Update Employer Information
+
+```
+PUT /api/employer/{employer_id}
+```
+
+The `Update Employer Information` method allows an employer to update their profile. The request body should contain the fields to be updated.
+
+###### Deactivate Employer Profile
+
+```
+DELETE /employer/{employer_id}
+```
+
+The `Deactivate Employer Profile` method allows an employer to deactivate their account. Upon successful deactivation, the response includes a confirmation message.
+
+###### Download Anonymized Candidate Resume
+
+```
+GET /api/employer/{employer_id}/{candidate_id}/anonymized
+```
+
+The `Download Anonymized Candidate Resume` method allows an employer to retrieve an anonymized resume for a specific candidate.
+
+##### Download Unlocked Candidate Resume
+
+```
+GET /api/employer/{employer_id}/candidates/{candidate_id}/resume
+```
 
 | ADR # | Title                               | Why                                                                                                                                                                            | Trade-offs                                                                                                                                                                                   | Link                             |
 | ----- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
 | 03    | Organize components per domain      | Organizes ClearView components into domain-specific groups (candidate, employer, matching, etc.) to separate concerns effectively and improve maintainability and testability. | Requires managing inter-domain communication and potentially increasing complexity if domains grow interdependent.                                                                           | <a href="adr/adr03.md">ADR03</a> |
 
-**Administrator Endpoint Methods**
+The `Download Unlocked Candidate Resume` method allows an employer to retrieve an unlocked candidate resume that has been paid for or otherwise authorized.
 
-**updateCandidateHireStatus:**
+##### Job Ads
 
-Description: Allows an administrator to update the hire status of a candidate.
+###### Create Job Ad
 
-Parameters:
 ```
-candidateId: The ID of the candidate.
-jobAdId: The ID of the job the candidate applied to.
-status: The new hire status (`hired`, rejected, pending).
-```
-Response: 
-```json 
-{"success": true, "message": "Candidate hire status updated"}
- ```
-
-Example Usage:
-```
-   PUT /api/admin/updateCandidateHireStatus
-```
-Body:
-``` json
-   {
-     "candidateId": "123",
-     "jobAdId": "456",
-     "status": "hired"
-   }
+POST /api/employer/{employer_id}/job
 ```
 
-**updateUser**
+The `Create Job Ad` method allows an employer to create a new job ad. The request body should contain the details of the job to be posted.
 
-Description: Allows an administrator to update general user data, including for candidates and employers.
+###### Retrieve Job Ads
 
-Parameters:
 ```
-userId: The ID of the user.
-data: A JSON object containing the updated user data (e.g., name, email, etc.).
-```
-Response: 
-``` json
-{"success": true, "message": "User data updated"}
+GET /api/employer/{employer_id}/jobs
 ```
 
-Example Usage:
+The `Retrieve Job Ads` method allows an employer to view all of their job ads.
+
+###### Update Job Ad
+
 ```
-   PUT /api/admin/updateUser
-```
-Body:
-``` json
-   {
-     "userId": "789",
-     "data": {
-       "email": "newemail@example.com",
-       "name": "Updated Name"
-     }
-   }
+PUT /api/employer/{employer_id}/job/{job_id}
 ```
 
-**updateCandidate**
+The `Update Job Ad` method allows an employer to update an existing job ad. The request body should include the fields to be updated.
 
-Description: Allows an administrator to update specific candidate-related data (e.g., skills, resume).
+###### Remove Job Ad
 
-Parameters:
 ```
-candidateId: The ID of the candidate.
-data: A JSON object containing the updated candidate data (e.g., skills, resume, etc.).
-```
-Response: 
-``` json
-{"success": true, "message": "Candidate data updated"}
+DELETE /api/employer/{employer_id}/job/{job_id}
 ```
 
-Example Usage:
+The `Remove Job Ad` method allows an employer to delete a job ad from their list.
+
+##### Payments:
+
+###### Make Payment
+
 ```
-   PUT /api/admin/updateCandidate
-```
-Body:
-``` json
-   {
-     "candidateId": "123",
-     "data": {
-       "skills": ["Java", "Python"],
-       "resume": "updatedResumeData"
-     }
-   }
+POST /api/employer/{employer_id}/payment
 ```
 
-**updateEmployer**
+The `Make Payment` method allows an employer to make a payment for unlocking candidate profiles or other services.
 
-Description: Allows an administrator to update 
-employer-related data (e.g., company details, job posts).
+###### Retrieve Payment History
 
-Parameters:
 ```
-employerId: The ID of the employer.
-data: A JSON object containing the updated employer data (e.g., company name, job postings, etc.).
-```
-Response: 
-``` json
-{"success": true, "message": "Employer data updated"}
+GET /api/employer/{employer_id}/payments
 ```
 
-Example Usage:
+The `Retrieve Payment History` method allows an employer to view the history of payments made.
+
+##### HR System Integration
+
+###### Integrate with HR System
+
 ```
-   PUT /api/admin/updateEmployer
-```
-Body:
-``` json
-   {
-     "employerId": "456",
-     "data": {
-       "companyName": "New Company Name",
-       "jobPosts": ["789", "101"]
-     }
-   }
+POST /api/employer/{employer_id}/hr-integration
 ```
 
-**updateMatchingStrategyConfig**
+The `Integrate with HR System` method allows an employer to integrate ClearView with their own HR system.
 
-Description: Allows an administrator to update the matching strategy configuration for the skill-matching service (Cosine Similarity vs. LLM).
+###### Synchronize with HR System
 
-Parameters:
 ```
-strategy: The new matching strategy (`cosineSimilarity` or LLM).
-```
-Response: 
-``` json
-{"success": true, "message": "Matching strategy updated"}
+GET /api/employer/{employer_id}/hr-sync
 ```
 
-Example Usage:
+The `Synchronize with HR System` method allows an employer to synchronize job ads between ClearView and their HR system.
+
+### Administrator Endpoint
+
+#### Administrator Endpoint Overview
+The Administrator Endpoint is designed to provide system administrators with special privileges for managing users, candidates, employers, and the skill-matching configuration. This includes the ability to update hire statuses, modify user data, and change the matching strategy (e.g., switch between Cosine Similarity and LLM-based matching).
+
+##### Related ADRs
+
+| ADR # | Title                               | Why                                                                                                                                                                            | Trade-offs                                                                                                                                                                                   | Link                             |
+| ----- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
+| 03    | Organize components per domain      | Organizes ClearView components into domain-specific groups (candidate, employer, matching, etc.) to separate concerns effectively and improve maintainability and testability. | Requires managing inter-domain communication and potentially increasing complexity if domains grow interdependent.                                                                           | <a href="adr/adr03.md">ADR03</a> |
+| 04    | Unified API with multiple endpoints | Simplifies architecture by having a single API with various endpoints for different functionalities.                                                                           | Can lead to large, complex APIs over time, making it harder to maintain clear boundaries between services. Reducing number of API services to one instead of multiple (one for each domain). | <a href="adr/adr04.md">ADR04</a> |
+
+##### Administrator Endpoint Methods
+
+###### Update Candidate Hire Status
+
 ```
-   PUT /api/admin/updateMatchingStrategyConfig
+PUT /api/admin/updateCandidateHireStatus/{candidateId}
 ```
-Body:
-``` json
-   {
-     "strategy": "cosineSimilarity"
-   }
+
+The `Update Candidate Hire Status` method allows an administrator to update the hire status of a candidate for a specific job.
+
+###### Update User
+
 ```
+PUT /api/admin/updateUser/{userId}
+```
+
+The `Update User` method allows an administrator to update general user data, including for candidates and employers.
+
+###### Update Candidate
+
+```
+PUT /api/admin/updateCandidate/{candidate_id}
+```
+
+The `Update Candidate` method allows an administrator to update candidate details using the candidate's ID.
+
+
+###### Update Employer
+
+```
+PUT /api/admin/updateEmployer/{employer_id}
+```
+
+The `Update Employer` method allows an administrator to update employer-related data using the employer's ID.
+
+###### Update Matching Strategy Configuration
+
+```
+PUT /api/admin/updateMatchingStrategyConfig/{strategy}
+```
+
+The `Update Matching Strategy Configuration` method allows an administrator to update the matching strategy configuration for the skill-matching service (e.g., switch between Cosine Similarity and LLM).
+
 
 ``` mermaid
 classDiagram
@@ -1301,98 +1115,137 @@ The Reporting API in ClearView is divided into two key sections: **Business Repo
 #### 1. Business Reporting
 The **Business Reporting** section focuses on metrics related to users, job postings, and the effectiveness of ClearView’s matching process. It helps employers and system administrators gain insights into the candidate pool, job activity, and the accuracy of the matching algorithm, providing data-driven feedback on the platform’s performance. Key API methods include:
 
-- **getActiveCandidates**:  
-  Retrieves the number of active candidates over a given period.  
-  Parameters: `dateFrom`, `dateTo`  
-  Response: `{timelineData: [{date: '2024-01-01', count: 1400}, ...]}`
-  
-- **getActiveEmployers**:  
-  Retrieves the number of active employers over a given period.  
-  Parameters: `dateFrom`, `dateTo`  
-  Response: `{timelineData: [{date: '2024-01-01', count: 280}, ...]}`
+#### Business Reporting API Methods
 
-- **getActiveJobs**:  
-  Retrieves the number of active job postings within a time range.  
-  Parameters: `dateFrom`, `dateTo`  
-  Response: `{timelineData: [{date: '2024-01-01', count: 750}, ...]}`
+##### Get Active Candidates
 
-- **getScoreVsOfferComparison**:  
-  Provides a histogram showing the distribution of scores and the number of candidates receiving job offers within each score range. This helps determine the accuracy of the matching algorithm by correlating high scores with high job offer counts.  
-  Parameters: None  
-  Response: `{histogram: [{scoreRange: '0-10', offersCount: 5}, ...]}`
+```
+GET /api/reporting/business/activeCandidates
+```
 
-- **getScoreVsRejectComparison**:  
-  Similar to the previous method, this histogram focuses on candidates who were rejected, comparing the distribution of rejection rates against score ranges.  
-  Parameters: None  
-  Response: `{histogram: [{scoreRange: '0-10', rejectsCount: 40}, ...]}`
+The `Get Active Candidates` method retrieves the number of active candidates over a given period. The parameters `dateFrom` and `dateTo` specify the time range for the data. The response includes a timeline of active candidate counts.
 
-- **getDemographicOfferRejectBreakdown**:  
-  Provides data on offers and rejections categorized by demographic groups, offering insights into the diversity and inclusiveness of the hiring process.  
-  Response: `{demographicData: {gender: {offers: {...}, rejections: {...}}, ethnicity: {...}}}`
+##### Get Active Employers
 
-- **getEmployerSurveyData**:  
-  Retrieves employer feedback, likely sourced from an integrated survey service, offering insights into the employer's experience with the platform.  
-  Response: `{surveyResults: [...]}`
+```
+GET /api/reporting/business/activeEmployers
+```
 
-- **getCandidateSurveyData**:  
-  Similarly, retrieves candidate feedback to evaluate the candidate experience on the platform.  
-  Response: `{surveyResults: [...]}`
+The `Get Active Employers` method retrieves the number of active employers over a given period. The parameters `dateFrom` and `dateTo` specify the time range for the data. The response includes a timeline of active employer counts.
+
+##### Get Active Jobs
+
+```
+GET /api/reporting/business/activeJobs
+```
+
+The `Get Active Jobs` method retrieves the number of active job postings over a given period. The parameters `dateFrom` and `dateTo` specify the time range for the data. The response includes a timeline of active job counts.
+
+##### Get Score Vs Offer Comparison
+
+```
+GET /api/reporting/business/scoreOfferComparison
+```
+
+The `Get Score Vs Offer Comparison` method provides a histogram showing the distribution of scores and the number of candidates receiving job offers within each score range. This helps determine the accuracy of the matching algorithm by correlating high scores with high job offer counts.
+
+##### Get Score Vs Reject Comparison
+
+```
+GET /api/reporting/business/scoreRejectComparison
+```
+
+The `Get Score Vs Reject Comparison` method provides a histogram showing the distribution of scores and the number of candidates rejected within each score range. This helps identify score ranges where candidates are more likely to be rejected.
+
+##### Get Demographic Offer Reject Breakdown
+
+```
+GET /api/reporting/business/demographicOfferRejectBreakdown
+```
+
+The `Get Demographic Offer Reject Breakdown` method provides data on offers and rejections categorized by demographic groups
+
+##### Get Employer Survey Data
+
+``` 
+GET /api/reporting/business/employerSurvey
+```
+
+The `Get Employer Survey Data` method retrieves feedback from employers, offering insights into their experience with the platform. The response includes survey results.
+
+
+##### Get Candidate Survey Data
+
+```
+GET /api/reporting/business/candidateSurvey
+```
+
+The `Get Candidate Survey Data` method retrieves feedback from candidates, evaluating their experience on the platform. The response includes survey results.
 
 #### 2. Service Review
+
 The **Service Review** section monitors the health and performance of ClearView’s services, including metrics related to errors, downtime, and performance of the **LLM services**. Key API methods include:
 
-- **getErrorsOverview**:  
-  Provides a breakdown of errors across pages, endpoints, or services to help identify and address system issues.  
-  Parameters: `filterBy: page/endpoint/service`  
-  Response: `{totalErrors: 50, errorsByEndpoint: {...}}`
+##### Service Review API Methods
 
-- **getCrashesOverview**:  
-  Retrieves data on system crashes, providing an overview of system stability.  
-  Response: `{totalCrashes: 5, crashDetails: [...]}`
+##### Get Errors Overview
 
-- **getServiceDowntime**:  
-  Provides details on service downtime, broken down by different services.  
-  Response: `{totalDowntime: '5 hours', breakdown: {...}}`
+```
+GET /api/reporting/service/errorsOverview
+```
 
-- **getLLMLatency**:  
-  Reports on the latency of LLM services, helping monitor and optimize LLM performance.  
-  Response: `{averageLatency: 200ms, breakdownByService: {...}}`
+The `Get Errors Overview` method provides a breakdown of errors across pages, endpoints, or services to help identify and address system issues. The parameter `filterBy` specifies whether to filter by page, endpoint, or service. The response includes the total number of errors and a detailed breakdown.
 
-- **getLLMCost**:  
-  Provides cost data related to running LLM services, offering insights into the financial impact of these operations.  
-  Response: `{totalCost: 1500, breakdownByUsage: {...}}`
+##### Get Crashes Overview
 
-- **getLLMCapacityUsage**:  
-  Reports on the capacity usage of the LLM service to ensure the system is operating within its performance limits.  
-  Response: `{totalCapacityUsed: 75%, usageDetails: {...}}`
+```
+GET /api/reporting/service/crashesOverview
+```
 
-#### API Endpoints Overview:
+The `Get Crashes Overview` method retrieves data on system crashes, providing an overview of system stability. The response includes the total number of crashes and detailed crash information.
 
-- `/api/reporting/business/activeCandidates` – Returns active candidate count and timeline.
-- `/api/reporting/business/activeEmployers` – Returns active employer count and timeline.
-- `/api/reporting/business/activeJobs` – Returns active job count and timeline.
-- `/api/reporting/business/scoreOfferComparison` – Compares score vs. job offers.
-- `/api/reporting/business/scoreRejectComparison` – Compares score vs. rejections.
-- `/api/reporting/business/demographicOfferRejectBreakdown` – Breaks down offers/rejections by demographics.
-- `/api/reporting/business/employerSurvey` – Retrieves employer survey data.
-- `/api/reporting/business/candidateSurvey` – Retrieves candidate survey data.
-- `/api/reporting/service/errorsOverview` – Provides an error overview by endpoint/service.
-- `/api/reporting/service/crashesOverview` – Retrieves system crash data.
-- `/api/reporting/service/serviceDowntime` – Retrieves downtime data for services.
-- `/api/reporting/service/llmLatency` – Returns LLM latency data.
-- `/api/reporting/service/llmCost` – Provides cost details for LLM operations.
-- `/api/reporting/service/llmCapacity` – Retrieves LLM capacity usage data.
+##### Get Service Downtime
+
+```
+GET /api/reporting/service/serviceDowntime
+```
+
+The `Get Service Downtime` method provides details on service downtime, broken down by different services. The response includes the total downtime and a breakdown by service.
+
+##### Get LLM Latency
+
+```
+GET /api/reporting/service/llmLatency
+```
+
+The `Get LLM Latency` method reports on the latency of LLM services, helping monitor and optimize LLM performance. The response includes the average latency and a breakdown by service.
+
+##### Get LLM Cost
+
+```
+GET /api/reporting/service/llmCost
+```
+
+The `Get LLM Cost` method provides cost data related to running LLM services, offering insights into the financial impact of these operations. The response includes the total cost and a breakdown by usage.
+
+##### Get LLM Capacity Usage
+
+```
+GET /api/reporting/service/llmCapacity
+```
+
+The `Get LLM Capacity Usage` method reports on the capacity usage of the LLM service to ensure the system is operating within its performance limits. The response includes the total capacity used and detailed usage information.
 
 #### Triggering data aggregation
 
-Data agregation is triggered on a monthly basis by Admin. To trigger it we will use ```runDataAggregation(dateFrom, dateTo)```. This method will run backend process to gather data. Since we are operating on single database, all the aggregation we need at this point can be covered by a Database job. 
+```
+POST /api/reporting/service/runDataAggregation/{dateFrom}/{dateTo}
+```
 
+The `runDataAggregation` method triggers the backend process to gather monthly data. The parameters `dateFrom` and `dateTo` specify the time range for data aggregation.
+This method will run backend process to gather data. Since we are operating on single database, all the aggregation we need at this point can be covered by a Database job. 
 This job could potentially be triggered by schedule in Database, however, based on requirements we want to allow Admin to trigger it as well.
 
-**runDataAggregation** : Runs database job to gather monthly data.
-Parameters: ```dateFrom```,```dateTo```
-
-- `/api/reporting/service/runDataAggregation`
 
 ## Storage
 ### Database
