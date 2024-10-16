@@ -64,24 +64,23 @@ Taking into account all requirements we decided that 3 main characteristics for 
 
 Besides these we consider *Fault-tolerance, Evolvabilty, Scalability, Testability, Workflow and Abstraction.*
 
-Testability of the system is important for increasing security and reliability of our solution. We have higher security requirements due to dealing with very sensitive personal data (CVs). Additionally increased testability will help us with making sure that our AI driven solution gives good quality results.
+<img src="worksheets/architecture_styles.png">
 
-Evolvability is also an important characteristic because of the requirement to potentially add new AI features in the future. AI technologies are rapidly changing and we need to allow our system to be ready for those changes.
+***Testability*** of the system is important for increasing security and reliability of our solution. We have higher security requirements due to dealing with very sensitive personal data (CVs). Additionally increased testability will help us with making sure that our AI driven solution gives good quality results.
 
-Fault-tolerance is not the most important characteristic because even if our system temporarily stops operating due to a component failing it will not have big life related consequences and reliability is more important to us from availability. But on the other hand, we do have different types of users and many different parts of the system, so from a user experience perspective it would be good to not have some basic resistance in case some component fails.
+***Evolvability*** is also an important characteristic because of the requirement to potentially add new AI features in the future. AI technologies are rapidly changing and we need to allow our system to be ready for those changes.
 
-After consulting with the subject matter expert regarding the expected volume of users, we concluded that with only 5000 candidates and several hundred employees scalability and elasticity are not driving characteristic. Our biggest processing bottleneck is the matching service, With the expected volume of users and the requirement that we only do the matching once per Job Ad we don't expect sudden changes in processing requirement, which also leads to elasticity not being our primary goal.
+***Fault-tolerance*** is not the most important characteristic because even if our system temporarily stops operating due to a component failing it will not have big life related consequences and reliability is more important to us from availability. But on the other hand, we do have different types of users and many different parts of the system, so from a user experience perspective it would be good to not have some basic resistance in case some component fails.
 
-*Reliablity* is also important as a composite characteristic.
+After consulting with the subject matter expert regarding the expected volume of users, we concluded that with only 5000 candidates and several hundred employees ***Scalability*** and ***Elasticity*** are not driving characteristic. Our biggest processing bottleneck is the matching service, With the expected volume of users and the requirement that we only do the matching once per Job Ad we don't expect sudden changes in processing requirement, which also leads to elasticity not being our primary goal.
 
+***Reliablity*** is also important as a composite characteristic.
 
 <img src="worksheets/architecture_characteristis.png">
 
 After careful consideration, we have decided that Service-Based architecture is one that best fits our requirements.
 
 There were other styles which could be also good options like microkernel, microservices or event-driven, however, cost and simplicity were the main characteristics which made the difference.
-
-<img src="worksheets/architecture_styles.png">
 
 
 |ADR #| 	Title| 	Why |	Trade-offs 	| Link |
@@ -568,6 +567,8 @@ graph TD
 | 08    | Use Third party solution for Survey and Payment | There are good existing solutions for this problem so we can reuse and reduce costs.                 | Hard to customize and extend, but no maintenance and cost is low.                                                                                                                            | <a href="adr/adr08.md">ADR08</a> |
 
 ## Unified API
+
+As part of the Unified API design we have additionally added a substantial amount of lower level details, for example endpoints with descriptions. These are explained here in order to capture our current understanding of how we envision our system will communicate with external applications. The implementators will have all the freedom and power to change and fine tune this API as they deep dive into fleshing out the system.
 
 ### Candidate Endpoint
 
