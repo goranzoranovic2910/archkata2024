@@ -66,8 +66,6 @@ We are a team of software engineers from Microsoft Serbia passionate about softw
         - [Get Job Matches](#get-job-matches)
         - [Retrieve filtered matches](#retrieve-filtered-matches)
         - [Get Job Details](#get-job-details)
-      - [Job Applications](#job-applications)
-        - [Apply for Job](#apply-for-job)
     - [Employer Endpoint](#employer-endpoint)
       - [1. Overview](#1-overview)
       - [2. Employer Registration and Management](#2-employer-registration-and-management)
@@ -828,16 +826,6 @@ GET /api/candidates/jobs/{jobId}
 ```
 
 The `Get Job Details` method allows an authenticated candidate to retrieve detailed information about a specific job. The request must include an authorization header with the candidate's token and a path parameter specifying the job ID. Upon successful retrieval, the response includes detailed information about the job, such as job ID, title, company, location, description, requirements, posted date in ISO 8601 format, and match score. For more details, please visit [candidate API specs](/apis/candidate.md).
-
-#### Job Applications
-
-##### Apply for Job
-
-```
-POST /api/candidates/jobs/{jobId}/apply
-```
-
-The `Apply for Job` method allows an authenticated candidate to apply for a specific job. The request must include an authorization header with the candidate's token and a path parameter specifying the job ID. Upon successful application, the response includes a 201 Created status and a JSON object containing the application ID, job ID, application date in ISO 8601 format, and the application status. For more details, please visit [candidate API specs](/apis/candidate.md).
 
 ### Employer Endpoint
 
