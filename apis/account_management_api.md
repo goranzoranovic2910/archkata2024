@@ -23,7 +23,7 @@ The `Login Candidate` method allows a registered candidate to log in by providin
 ## Get Candidate Profile
 
 ```
-GET /api/candidates/profile
+GET /api/candidates/profile 
 ```
 
 The Get Candidate Profile method allows an authenticated candidate to retrieve their profile information. The request must include an authorization header with the candidate's token. Upon successful retrieval, the response includes the candidate's ID, email, first name, last name, and phone number. For more details, please visit [candidate API specs](candidate.md).
