@@ -65,23 +65,8 @@ We are a team of software engineers from Microsoft Serbia passionate about softw
     - [Reporting Endpoint](#reporting-endpoint)
       - [1. Business Reporting](#1-business-reporting)
       - [Business Reporting API Methods](#business-reporting-api-methods)
-        - [Get Active Candidates](#get-active-candidates)
-        - [Get Active Employers](#get-active-employers)
-        - [Get Active Jobs](#get-active-jobs)
-        - [Get Score Vs Offer Comparison](#get-score-vs-offer-comparison)
-        - [Get Score Vs Reject Comparison](#get-score-vs-reject-comparison)
-        - [Get Demographic Offer Reject Breakdown](#get-demographic-offer-reject-breakdown)
-        - [Get Employer Survey Data](#get-employer-survey-data)
-        - [Get Candidate Survey Data](#get-candidate-survey-data)
       - [2. Service Review](#2-service-review)
         - [Service Review API Methods](#service-review-api-methods)
-        - [Get Errors Overview](#get-errors-overview)
-        - [Get Crashes Overview](#get-crashes-overview)
-        - [Get Service Downtime](#get-service-downtime)
-        - [Get LLM Latency](#get-llm-latency)
-        - [Get LLM Cost](#get-llm-cost)
-        - [Get LLM Capacity Usage](#get-llm-capacity-usage)
-      - [Triggering data aggregation](#triggering-data-aggregation)
   - [Storage](#storage)
     - [Database](#database)
     - [Schema considerations](#schema-considerations)
@@ -893,70 +878,18 @@ The **Business Reporting** section focuses on metrics related to users, job post
 
 #### Business Reporting API Methods
 
-##### Get Active Candidates
+The following table summarizes the key API methods for the Business Reporting module. These methods provide insights into system performance, user engagement, and the effectiveness of ClearViewâ€™s matching process. The exact endpoints and implementations may vary, but this table provides a general overview of the available operations. For more details, please refer to the [detailed Business Reporting API documentation](apis/business_reporting_api.md).
 
-```
-GET /api/reporting/business/activeCandidates
-```
-
-The `Get Active Candidates` method retrieves the number of active candidates over a given period. The parameters `dateFrom` and `dateTo` specify the time range for the data. The response includes a timeline of active candidate counts.
-
-##### Get Active Employers
-
-```
-GET /api/reporting/business/activeEmployers
-```
-
-The `Get Active Employers` method retrieves the number of active employers over a given period. The parameters `dateFrom` and `dateTo` specify the time range for the data. The response includes a timeline of active employer counts.
-
-##### Get Active Jobs
-
-```
-GET /api/reporting/business/activeJobs
-```
-
-The `Get Active Jobs` method retrieves the number of active job postings over a given period. The parameters `dateFrom` and `dateTo` specify the time range for the data. The response includes a timeline of active job counts.
-
-##### Get Score Vs Offer Comparison
-
-```
-GET /api/reporting/business/scoreOfferComparison
-```
-
-The `Get Score Vs Offer Comparison` method provides a histogram showing the distribution of scores and the number of candidates receiving job offers within each score range. This helps determine the accuracy of the matching algorithm by correlating high scores with high job offer counts.
-
-##### Get Score Vs Reject Comparison
-
-```
-GET /api/reporting/business/scoreRejectComparison
-```
-
-The `Get Score Vs Reject Comparison` method provides a histogram showing the distribution of scores and the number of candidates rejected within each score range. This helps identify score ranges where candidates are more likely to be rejected.
-
-##### Get Demographic Offer Reject Breakdown
-
-```
-GET /api/reporting/business/demographicOfferRejectBreakdown
-```
-
-The `Get Demographic Offer Reject Breakdown` method provides data on offers and rejections categorized by demographic groups
-
-##### Get Employer Survey Data
-
-``` 
-GET /api/reporting/business/employerSurvey
-```
-
-The `Get Employer Survey Data` method retrieves feedback from employers, offering insights into their experience with the platform. The response includes survey results.
-
-
-##### Get Candidate Survey Data
-
-```
-GET /api/reporting/business/candidateSurvey
-```
-
-The `Get Candidate Survey Data` method retrieves feedback from candidates, evaluating their experience on the platform. The response includes survey results.
+| Method        | Endpoint                                      | Description                                                                                  |
+|---------------|-----------------------------------------------|----------------------------------------------------------------------------------------------|
+| GET           | /api/reporting/business/activeCandidates      | Retrieve the number of active candidates over a given period.                                |
+| GET           | /api/reporting/business/activeEmployers       | Retrieve the number of active employers over a given period.                                 |
+| GET           | /api/reporting/business/activeJobs            | Retrieve the number of active job postings over a given period.                              |
+| GET           | /api/reporting/business/scoreOfferComparison  | Histogram of scores and job offers.                                                          |
+| GET           | /api/reporting/business/scoreRejectComparison | Histogram of scores and job rejections.                                                      |
+| GET           | /api/reporting/business/demographicOfferRejectBreakdown | Breakdown of offers and rejections by demographics.                                          |
+| GET           | /api/reporting/business/employerSurvey    | Survey data from employers.                                                                  |
+| GET           | /api/reporting/business/candidateSurvey   | Survey data from candidates.                                                                 |
 
 #### 2. Service Review
 
@@ -964,63 +897,17 @@ The **Service Review** section monitors the health and performance of ClearViewâ
 
 ##### Service Review API Methods
 
-##### Get Errors Overview
+The following table summarizes the key API methods for the Service Review module. These methods provide insights into system errors, crashes, downtime, and the performance of LLM services. The exact endpoints and implementations may vary, but this table provides a general overview of the available operations. For more details, please refer to the [detailed Service Review API documentation](apis/service_review_api.md).
 
-```
-GET /api/reporting/service/errorsOverview
-```
-
-The `Get Errors Overview` method provides a breakdown of errors across pages, endpoints, or services to help identify and address system issues. The parameter `filterBy` specifies whether to filter by page, endpoint, or service. The response includes the total number of errors and a detailed breakdown.
-
-##### Get Crashes Overview
-
-```
-GET /api/reporting/service/crashesOverview
-```
-
-The `Get Crashes Overview` method retrieves data on system crashes, providing an overview of system stability. The response includes the total number of crashes and detailed crash information.
-
-##### Get Service Downtime
-
-```
-GET /api/reporting/service/serviceDowntime
-```
-
-The `Get Service Downtime` method provides details on service downtime, broken down by different services. The response includes the total downtime and a breakdown by service.
-
-##### Get LLM Latency
-
-```
-GET /api/reporting/service/llmLatency
-```
-
-The `Get LLM Latency` method reports on the latency of LLM services, helping monitor and optimize LLM performance. The response includes the average latency and a breakdown by service.
-
-##### Get LLM Cost
-
-```
-GET /api/reporting/service/llmCost
-```
-
-The `Get LLM Cost` method provides cost data related to running LLM services, offering insights into the financial impact of these operations. The response includes the total cost and a breakdown by usage.
-
-##### Get LLM Capacity Usage
-
-```
-GET /api/reporting/service/llmCapacity
-```
-
-The `Get LLM Capacity Usage` method reports on the capacity usage of the LLM service to ensure the system is operating within its performance limits. The response includes the total capacity used and detailed usage information.
-
-#### Triggering data aggregation
-
-```
-POST /api/reporting/service/runDataAggregation/{dateFrom}/{dateTo}
-```
-
-The `runDataAggregation` method triggers the backend process to gather monthly data. The parameters `dateFrom` and `dateTo` specify the time range for data aggregation.
-This method will run backend process to gather data. Since we are operating on single database, all the aggregation we need at this point can be covered by a Database job. 
-This job could potentially be triggered by schedule in Database, however, based on requirements we want to allow Admin to trigger it as well.
+| Method        | Endpoint                                      | Description                                                                                  |
+|---------------|-----------------------------------------------|----------------------------------------------------------------------------------------------|
+| GET           | /api/reporting/service/errorsOverview         | Provides a breakdown of errors across pages, endpoints, or services.                         |
+| GET           | /api/reporting/service/crashesOverview        | Retrieves data on system crashes, providing an overview of system stability.                 |
+| GET           | /api/reporting/service/serviceDowntime        | Provides details on service downtime, broken down by different services.                     |
+| GET           | /api/reporting/service/llmLatency             | Reports on the latency of LLM services.                                                      |
+| GET           | /api/reporting/service/llmCost                | Provides cost data related to running LLM services.                                          |
+| GET           | /api/reporting/service/llmCapacity            | Reports on the capacity usage of the LLM service.                                            |
+| POST          | /api/reporting/service/runDataAggregation/{dateFrom}/{dateTo} | Triggers the backend process to gather monthly data for a specified time range.              |
 
 
 ## Storage
@@ -1104,5 +991,3 @@ While ClearView does not expect to handle more than **5,000 active candidates** 
 ### Premium Business model
 
 We are considering introducing a **Premium account** option for employers, which would unlock additional **AI-powered features** to enhance the hiring process. One such feature could be the use of **LLM-based matching** instead of the default **Cosine Similarity**. LLM matching, powered by advanced language models, could provide employers with **higher-quality candidate matches** by understanding the deeper context of job descriptions and resumes. However, running LLMs for matching is significantly more **costly** compared to Cosine Similarity, which is why we are exploring offering it as part of a premium service tier. This allows us to deliver enhanced functionality to employers who need it while keeping overall costs manageable for the system.
-
-
