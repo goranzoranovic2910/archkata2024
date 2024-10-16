@@ -460,18 +460,12 @@ Below is a simplified table for the Matching API methods. These are proposals on
 | POST          | /api/matching/jobs       | Create a new job listing.          |
 | GET           | /api/matching/candidates | Retrieve a list of candidates.     |
 | POST          | /api/matching/match      | Match a candidate to a job.        |
-
+| GET           | /api/matching/candidates/{candidate_id}/skills | Fetch the extracted skills for a candidate based on their CandidateId. |
 
 #### Skill extraction
 
 Skill extraction is triggered before matching to gather required skills from job add and candidate skills from resume.
 Extraction needs to be done using AI model, in our case LLM which transforms resume or add into map of skill descriptions. [More details](apis/skills_extraction.md)
-
-Fetch the extracted skills for a candidate based on their CandidateId. Output is a map of skills. Example: `{Java: Expert, Python: Intermediate}`
-
-```
-GET api/matching/candidates/{candidate_id}/skills
-```
 
 ### Scoring Logic
 Scoring candidates against job ads is a complex task, with many potential approaches. Given ClearView’s emphasis on cost-efficiency, we favor solutions that are cost-effective while providing the flexibility to adopt different strategies.
