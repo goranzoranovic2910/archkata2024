@@ -611,13 +611,11 @@ The following table summarizes the key API methods for the Anonymized Resume Man
 
 #### AI Tips
 
-##### Get Resume Tips
+The following table summarizes the key API method for receiving resume improvement tips. This method allows authenticated candidates to get personalized suggestions for enhancing their resumes.
 
-```
-GET /api/candidates/resume/tips
-```
-
-The `Get Resume Tips` method allows an authenticated candidate to receive tips for improving their resume. The request must include an authorization header with the candidate's token. Upon successful retrieval, the response includes the resume's ID and a list of tips. Each tip contains a category, suggestion, and priority level. For more details, please visit [candidate API specs](/apis/candidate.md).
+| Method        | Endpoint                          | Description                                                                                   |
+|---------------|-----------------------------------|-----------------------------------------------------------------------------------------------|
+| GET           | /api/candidates/resume/tips       | Provides resume improvement tips for authenticated candidates.                                |
 
 #### Job Matching
 
@@ -758,15 +756,6 @@ Below is a table summarizing the key API methods for the Payments module. These 
 |---------------|-------------------------------------------|----------------------------------------------------------------------------------------------|
 | POST          | /api/employer/{employer_id}/payment       | Make a payment for unlocking candidate profiles or other services.                           |
 | GET           | /api/employer/{employer_id}/payments      | Retrieve the history of payments made by the employer.                                       |
-
-##### HR System Integration
-
-Below is a table summarizing the key API methods for the HR System Integration module. These methods illustrate how employers can integrate and synchronize their HR systems with ClearView. The exact endpoints and implementations may vary, but this table provides a general overview of the available operations.
-
-| Method        | Endpoint                                      | Description                                                                                  |
-|---------------|-----------------------------------------------|----------------------------------------------------------------------------------------------|
-| POST          | /api/employer/{employer_id}/hr-integration    | Integrate ClearView with the employer's HR system.                                           |
-| GET           | /api/employer/{employer_id}/hr-sync           | Synchronize job ads between ClearView and the employer's HR system.                          |
 
 ### Administrator Endpoint
 
