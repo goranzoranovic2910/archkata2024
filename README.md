@@ -35,10 +35,6 @@ We are a team of software engineers from Microsoft Serbia passionate about softw
       - [Triggering](#triggering)
       - [Matching Process](#matching-process)
       - [Matching API](#matching-api)
-        - [Get Job for Candidate](#get-job-for-candidate)
-        - [Get Job Skills](#get-job-skills)
-        - [Score Candidate Job Match](#score-candidate-job-match)
-        - [Store Matching Score](#store-matching-score)
       - [Skill extraction](#skill-extraction)
     - [Scoring Logic](#scoring-logic)
         - [Cosine Similarity](#cosine-similarity)
@@ -48,14 +44,7 @@ We are a team of software engineers from Microsoft Serbia passionate about softw
     - [Candidate Endpoint](#candidate-endpoint)
       - [Related ADRs](#related-adrs-1)
       - [Account Management](#account-management)
-        - [Register Candidate](#register-candidate)
-        - [Login Candidate](#login-candidate)
-        - [Get Candidate Profile](#get-candidate-profile)
-        - [Update Candidate Profile](#update-candidate-profile)
       - [Resume Management](#resume-management)
-        - [Upload Resume](#upload-resume)
-        - [Get Resume](#get-resume)
-        - [Delete Resume](#delete-resume)
       - [Anonymized Resume Management](#anonymized-resume-management)
         - [Upload Anonymized Resume](#upload-anonymized-resume)
         - [Get Anonymized Resume](#get-anonymized-resume)
@@ -504,37 +493,15 @@ graph LR
 
 #### Matching API
 
-##### Get Job for Candidate
+Below is a simplified table for the Matching API methods. These are proposals on how we think the methods should look like; however, this is just an example and method names and types will vary depending on the implementation. For more details, please refer to the detailed [API documentation file](/apis/matching_api.md).
 
-Retrieve the list of jobs that the candidate applied to. The job data includes the job requirements and expected skills.
+| Method        | Endpoint                 | Description                        |
+|---------------|--------------------------|------------------------------------|
+| GET           | /api/matching/jobs       | Retrieve a list of jobs.           |
+| POST          | /api/matching/jobs       | Create a new job listing.          |
+| GET           | /api/matching/candidates | Retrieve a list of candidates.     |
+| POST          | /api/matching/match      | Match a candidate to a job.        |
 
-```
-GET api/matching/candidates/{candidate_id}/jobs
-```
-
-##### Get Job Skills
-
-Extract the required skills for the job from the `job_id`. Output is a map of skills. Example: `{Java: Expert, SQL: Intermediate}`
-
-```
-GET api/matching/jobs/{job_id}/skills
-```
-
-##### Score Candidate Job Match
-
-Compare the candidate’s skills with the job’s required skills. Use Cosine Similarity to compute a score (1-100%) that represents the candidate’s fit for the job.
-
-```
-GET api/matching/candidates/{candidate_id}/jobs/{job_id}/score
-```
-
-##### Store Matching Score
-
-Save the calculated score in the database, linking the CandidateId, JobAdId, and the score. Example: `{candidate_id: 123, job_id: 456, score: 85}`
-
-```
-PUT api/matching/candidates/{candidate_id}/jobs/{job_id}/score
-```
 
 #### Skill extraction
 
@@ -701,64 +668,25 @@ graph TD
 
 #### Account Management
 
-##### Register Candidate
+Below is a simplified table for the Account Management API methods. These are intended to provide an example of how the account management endpoints could be structured, but the exact method names and types may vary based on the final implementation. For more details, please refer to the [detailed Account Management API documentation](apis/account_management_api.md).
 
-```
-POST /api/candidates/register
-```
-
-The `Register Candidate` method allows a new candidate to create an account by providing their email, password, first name, last name, and phone number. Upon successful registration, the candidate's details are stored, and a unique candidate ID is generated. The response includes the candidate's ID, email, first name, last name, and the account creation timestamp in ISO 8601 format. For more details please visit [candidate API specs](/apis/candidate.md).
-
-##### Login Candidate
-
-```
-POST /api/candidates/login
-```
-
-The `Login Candidate` method allows a registered candidate to log in by providing their credentials. Upon successful authentication, the candidate can access subsequent APIs. The specific method of authentication and session management may vary depending on the implementation decision, and other types of authentication can be used as an implementation detail. For more details please visit [candidate API specs](/apis/candidate.md).
-
-##### Get Candidate Profile
-
-```
-GET /api/candidates/profile
-```
-
-The Get Candidate Profile method allows an authenticated candidate to retrieve their profile information. The request must include an authorization header with the candidate's token. Upon successful retrieval, the response includes the candidate's ID, email, first name, last name, and phone number. For more details, please visit [candidate API specs](/apis/candidate.md).
-
-##### Update Candidate Profile
-
-```
-PUT /api/candidates/profile
-```
-
-The `Update Candidate Profile` method allows an authenticated candidate to update their profile information. The request must include an authorization header with the candidate's token. The request body should contain the fields to be updated, such as `firstName`, `lastName`, and `phoneNumber`. Upon successful update, the response includes the candidate's ID, email, first name, last name, phone number, and the timestamp of the last update in ISO 8601 format. For more details, please visit [candidate API specs](/apis/candidate.md).
+| Method        | Endpoint                  | Description                                        |
+|---------------|---------------------------|----------------------------------------------------|
+| POST          | /api/candidates/register  | Register a new candidate.                          |
+| POST          | /api/candidates/login     | Log in a registered candidate.                     |
+| GET           | /api/candidates/profile/{profile_id}   | Retrieve the profile of the authenticated candidate.|
+| PUT           | /api/candidates/profile   | Update the profile of the authenticated candidate.  |
 
 #### Resume Management
 
-##### Upload Resume
+Below is a table summarizing the key API methods for the Resume Management module. These methods illustrate how resumes are uploaded, retrieved, updated, and managed in the system. The exact endpoints and implementations may vary, but this table provides a general overview of the available operations. For more details, please refer to the detailed Account Management API documentation.
 
-``` 
-POST /api/candidates/resume
-```
-
-The `Upload Resume` method allows an authenticated candidate to upload their resume. The request must include an authorization header with the candidate's token and use `multipart/form-data` for the request body. The request body should contain the resume file as a binary attachment. Upon successful upload, the response includes the resume's ID, file name, upload date in ISO 8601 format, and file size. For more details, please visit [candidate API specs](/apis/candidate.md).
-
-##### Get Resume
-
-``` 
-GET /api/candidates/resume
-```
-
-The `Get Resume` method allows an authenticated candidate to retrieve their uploaded resume. The request must include an authorization header with the candidate's token. Upon successful retrieval, the response includes the resume's ID, file name, upload date in ISO 8601 format, file size, and a download URL for the resume file. For more details, please visit [candidate API specs](/apis/candidate.md).
-
-##### Delete Resume
-
-```
-DELETE /api/candidates/resume
-```
-
-The `Delete Resume` method allows an authenticated candidate to delete their uploaded resume. The request must include an authorization header with the candidate's token. Upon successful deletion, the response includes a message confirming that the resume was deleted successfully. For more details, please visit [candidate API specs](/apis/candidate.md).
-
+| Method        | Endpoint                   | Description                                         |
+|---------------|----------------------------|-----------------------------------------------------|
+| POST          | /api/resumes/upload        | Upload a new resume in supported formats.           |
+| GET           | /api/resumes/{resume_id}   | Retrieve the original or anonymized version of a resume by ID. |
+| PUT           | /api/resumes/{resume_id}   | Update an existing resume with new information.     |
+| DELETE        | /api/resumes/{resume_id}   | Delete a specific resume from the system.           |
 
 #### Anonymized Resume Management
 
