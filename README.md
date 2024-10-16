@@ -10,9 +10,6 @@ We are a team of software engineers from Microsoft Serbia passionate about softw
 - [Goran Zoranovic](https://www.linkedin.com/in/goranzoranovic/)
 
 ## Table of contents
-- [Clear View Solution](#clear-view-solution)
-  - [Equi Hire Architects Team](#equi-hire-architects-team)
-  - [Table of contents](#table-of-contents)
   - [Company overview](#company-overview)
   - [Requirements](#requirements)
   - [Identifying architecture characteristics](#identifying-architecture-characteristics)
