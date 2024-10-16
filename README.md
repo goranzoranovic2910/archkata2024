@@ -635,69 +635,57 @@ graph LR
 
 ## Integration
 
-This diagram shows larger picture how ClearView integrates with other systems like payment and HR system.
+The [diagram](/appendix/integration.md) illustrates how ClearView integrates with external systems such as third-party payment processors and HR systems. ClearView’s architecture is designed to facilitate seamless communication with these systems while maintaining a modular and scalable structure.
 
-We will use third party Payment processor, so much of complexity is solved there automatically. However we need to take care of tracking payment and only then allowing access to resumes.
+1. **Payment Integration**:
+   - We rely on a third-party payment processor to manage the complexities of payment handling. This allows us to focus on business logic while ensuring that the payment system is secure, reliable, and compliant with financial regulations.
+   - The **Payment Processing** module is triggered when employers attempt to unlock candidate profiles. The integration is structured as follows:
+      - The **Employer Endpoint** triggers the payment process.
+      - Once a payment is initiated via the **Payment Gateway**, the system checks if the payment is successful.
+      - If successful, access to the candidate's profile is unlocked. In the event of failure, the employer is notified and given an option to retry.
+2. **HR System Integration**:
+   - ClearView offers flexible options for integrating with existing HR systems. Employers can either use the ClearView web application or integrate directly via the **ClearView Unified API**.
+   - The **HR System Integration** module ensures that job advertisements and candidate-related data can be synchronized between ClearView and the employer’s HR systems:
+      - Employers can create, update, or view job ads via the **Employer Endpoint**, which synchronizes with the HR system.
+      - Changes made in ClearView are automatically reflected in the HR system and vice versa, ensuring data consistency across platforms.
 
-For HR integration we offer using ClearView app to access Employer pages. However it will be possible to integrate using the unified API as well.
+``` mermaid
+flowchart TD 
+A[HR System 1]
+B[HR System 2]
+A --> C[ClearView Frontend]
+B --> D[ClearView Unified API]
+C --> D
+```
+<div align="center"><i>HR System Integration - Flow Diagram</i></div>
+<br />
+
+3. **ClearView Unified API**:
+   - The ClearView Unified API provides a standardized interface for external systems to interact with ClearView. This API supports operations related to candidates, employers, administrators, and reporting:
+      - **Candidate Endpoint**: Manages candidate profiles and interactions, such as uploading resumes and retrieving matched job results.
+      - **Employer Endpoint**: Handles job postings, payment processing, and candidate unlocking.
+      - **Administrator Endpoint**: Provides access for system management and reporting functionalities.
+      - **Reporting Endpoint**: Gathers and presents system usage and performance data to administrators and employers.
+4. **Data Storage and Synchronization**:
+   - The **ClearView Database** serves as the central data repository for structured data such as job ads, candidate profiles, and employer information.
+   - **Resume File Storage** is used to store large documents, such as resumes, in a more efficient and scalable manner.
+   - Integration with both the database and the resume storage system ensures that data flows smoothly between various ClearView modules and external systems.
+
+By leveraging a modular and API-driven approach, ClearView ensures that external systems can interact with the platform while maintaining secure and reliable data flows across services.
 
 ```mermaid
 graph TD
-    A[ClearView Frontend]
-    I[Reporting Endpoint]
-    A --> C[Candidate Endpoint]
-    C --> S[AI Tips Service]
-    A --> D[Employer Endpoint]
-    A --> H[Administrator Endpoint]
-    C --> E[Matching Service]
-    D --> E
-    C --> J[(ClearView Database)]
-    D --> J
-    E --> J
-    I --> J
-    H --> J
-    C --> M[Resumes File Storage]
+    D[Employer Endpoint]
+    F1[HR System Integration]
+    F2[Synchronize Job Ads with HR System]
+    F3[Update in ClearView and HR System]
+    E4[Unlock Candidate Profile]
 
-    subgraph Storage
-        subgraph Candidate_Data
-            J
-            M
-        end
-        J
-    end
-
-    subgraph ClearView Unified API
-        C
-        D
-        H
-        I
-    end
-
-    %% Integration of the Employer and Payment module %%
-    subgraph Employer_Operations
-        D --> D1[Create/Update Job Ad]
-        D --> D2[View Job Ads]
-        D1 --> D3[Save Job Ad to Database]
-        D2 --> D3
-    end
-
-    subgraph Payment_Processing
-        D --> E1[Make Payment to Unlock Candidate Profile]
-        E1 --> E2[Trigger Payment Gateway]
-        E2 --> E3[Payment Successful?]
-        E3 -->|Yes| E4[Unlock Candidate Profile]
-        E3 -->|No| E5[Show Payment Failure]
-    end
-
-    subgraph HR_Integration
-        D --> F1[HR System Integration]
-        F1 --> F2[Synchronize Job Ads with HR System]
-        F2 --> F3[Update in ClearView and HR System]
-        E4 --> F3
-    end
+    D --> F1[HR System Integration]
+    F1 --> F2[Synchronize Job Ads with HR System]
+    F2 --> F3[Update in ClearView and HR System]
+    E4 --> F3
 ```
-<div align="center"><i>External Systems Integration - Component Diagram</i></div>
-<br/>
 
 | ADR # | Title                                           | Why                                                                                                  | Trade-offs                                                                                                                                                                                   | Link                             |
 | ----- | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
