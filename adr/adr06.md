@@ -1,28 +1,26 @@
-### ADR 06: Split Database by Schema to Decouple Domains and Improve Security
+### ADR 06: Analytics as Part of Regular Database
 
-- **Title**: Split database by schema to decouple domains and improve security
+- **Title**: Analytics as part of regular database
 - **Status**: Accepted
 - **Context**:  
-  ClearView’s system handles sensitive and domain-specific data, including candidate profiles, employer job postings, matching results, and analytics. By default, all of this data would be stored in a single relational database. To enhance both fault-tolerance and security, and to ensure clear separation of concerns, a decision has been made to split the database into **multiple schemas**. Each schema will be responsible for managing data specific to one domain, ensuring that candidate, employer, matching, and analytics data are isolated from each other. This schema separation will also improve security, as different access controls can be applied to each schema.
+  ClearView needs to provide reporting and analytics functionality to track system performance, candidate-job matching outcomes, and other business metrics. Initially, a separate analytics database could be set up to handle this, but this adds complexity and operational overhead, especially given that real-time analytics is not a current requirement. To simplify the architecture and reduce costs, the decision has been made to embed analytics within the regular operational database, avoiding the need for a dedicated analytics database for now. This allows us to generate periodic reports and perform batch processing without the additional complexity of a real-time analytics pipeline.
 
 - **Decision**:  
-  ClearView’s relational database will be divided into distinct **schemas**, each handling data specific to a domain:
-  1. **Candidate Schema**: Manages candidate profiles, resumes, and skill extractions. This schema will have access controls to protect candidate data.
-  2. **Employer Schema**: Stores employer profiles, job postings, and related data.
-  3. **Matching Schema**: Contains job-candidate matching results, including the data generated from skill matching algorithms.
-  4. **Analytics Schema**: Stores aggregated and historical data used for reporting and analytics purposes.
+  Analytics data will be stored in the same relational database as the operational data, avoiding the need for a separate analytics database. The regular database will handle:
+  1. **Aggregated Data**: Storing aggregated data from candidate-job matching, system usage, and other metrics used for reporting.
+  2. **Business Reporting**: Providing data for periodic business reports on key metrics like active users, matches, employer engagement, and service performance.
+  3. **Batch Processing**: Analytics will be run in batch mode, avoiding the complexities and costs of real-time analytics.
 
-  By separating data into these schemas, we improve the system's overall security and fault tolerance, making it easier to manage access and maintain data integrity across the system.
+  By embedding analytics in the regular database, we simplify the system architecture and keep costs low, while retaining the ability to generate valuable insights from the stored data.
 
 - **Consequences**:
   - **Positive**:
-    - **Improved Security**: By separating data into different schemas, we can apply fine-grained access controls, ensuring that only authorized services and users can access sensitive data in each domain. For example, candidate data will be isolated from employer data, reducing the risk of unauthorized access.
-    - **Enhanced Fault-Tolerance**: Decoupling data into domain-specific schemas ensures that failures or issues in one domain (e.g., the matching service) do not affect other domains (e.g., candidate or employer data). This helps maintain system reliability and fault-tolerance.
-    - **Data Isolation**: Each schema is responsible for managing a specific domain’s data, reducing the risk of accidental data overlap or interference between domains. This simplifies auditing and ensures better data integrity.
-    - **Clear Separation of Concerns**: Separating data by schema aligns with domain-driven design principles, allowing each domain’s data model to evolve independently, with fewer cross-domain dependencies.
+    - **Simplified Architecture**: Embedding analytics in the regular database reduces the need for a separate data pipeline or additional infrastructure for handling analytics, lowering both operational complexity and costs.
+    - **Cost Efficiency**: This approach saves the costs associated with managing a separate analytics database, making it more efficient for ClearView’s current scale and requirements.
+    - **Easy Maintenance**: Maintaining a single database simplifies database administration tasks such as backups, monitoring, and scaling.
+    - **Scalability Options**: If real-time or advanced analytics needs grow in the future, it will be fairly easy to move the analytics data to a separate dedicated database as the system scales.
 
   - **Negative**:
-    - **Increased Complexity**: Managing multiple schemas introduces additional complexity, particularly in handling database optimizations and managing queries that span multiple schemas. Schema-specific optimizations will need to be carefully designed to ensure performance is maintained.
-    - **Cross-Schema Queries**: Inter-schema queries, such as those required to join data between the candidate and matching schemas, can be more complex and may impact performance. Special care must be taken to optimize these cross-schema interactions.
-    - **Operational Overhead**: Schema management will require more sophisticated tooling and processes, including database migrations, backups, and monitoring. Ensuring consistency and security across schemas adds operational overhead.
-    - **Maintenance Complexity**: Over time, managing separate schemas may lead to increased administrative burden, especially when dealing with schema evolution, versioning, and updates.
+    - **Performance Risks**: Combining both operational and analytics data in the same database may increase the load on the database, potentially affecting the performance of core system functionalities if queries become too complex or if analytics data grows significantly.
+    - **Limited Analytics Capabilities**: Embedding analytics in the regular database may limit the ability to perform advanced or real-time analytics, which could become a bottleneck if more sophisticated analytics features are required in the future.
+    - **Scaling Issues**: As the system grows, the volume of analytics data may outpace the capacity of the regular database, necessitating a migration to a dedicated analytics solution, which would require additional development and migration efforts.

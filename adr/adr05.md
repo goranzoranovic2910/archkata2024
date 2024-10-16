@@ -1,26 +1,28 @@
-### ADR 05: One Relational Database and One File-Storage DB
+### ADR 05: Split Database by Schema to Decouple Domains and Improve Security
 
-- **Title**: One relational database and one file-storage DB
+- **Title**: Split database by schema to decouple domains and improve security
 - **Status**: Accepted
 - **Context**:  
-  ClearView’s architecture must store data for multiple domains, including candidate profiles, job postings, skill extractions, and matches. Additionally, candidate resumes, which can include unstructured data, need to be stored securely. To simplify maintenance and reduce the complexity of managing multiple databases, a decision has been made to use a **single relational database** to store structured data for all domains and a **separate file-storage system** to handle resumes and other file uploads. This approach optimizes for ease of management and reduces the overhead of maintaining multiple database services.
+  ClearView’s system handles sensitive and domain-specific data, including candidate profiles, employer job postings, matching results, and analytics. By default, all of this data would be stored in a single relational database. To enhance both fault-tolerance and security, and to ensure clear separation of concerns, a decision has been made to split the database into **multiple schemas**. Each schema will be responsible for managing data specific to one domain, ensuring that candidate, employer, matching, and analytics data are isolated from each other. This schema separation will also improve security, as different access controls can be applied to each schema.
 
 - **Decision**:  
-  ClearView will use:
-  1. **One Relational Database (PostgreSQL)**: All structured data for the candidate, employer, matching, reporting, and other domains will be stored in a single relational database. This includes candidate profiles, job postings, skill mappings, and match results.
-  2. **One File-Storage Database (e.g., AWS S3)**: Candidate resumes and other file-based data will be stored separately in a file-storage database. This allows for efficient storage and retrieval of unstructured data without overloading the relational database.
+  ClearView’s relational database will be divided into distinct **schemas**, each handling data specific to a domain:
+  1. **Candidate Schema**: Manages candidate profiles, resumes, and skill extractions. This schema will have access controls to protect candidate data.
+  2. **Employer Schema**: Stores employer profiles, job postings, and related data.
+  3. **Matching Schema**: Contains job-candidate matching results, including the data generated from skill matching algorithms.
+  4. **Analytics Schema**: Stores aggregated and historical data used for reporting and analytics purposes.
 
-  By consolidating multiple domains into one relational database and separating file storage, we simplify the architecture and reduce the number of databases that need to be managed.
+  By separating data into these schemas, we improve the system's overall security and fault tolerance, making it easier to manage access and maintain data integrity across the system.
 
 - **Consequences**:
   - **Positive**:
-    - **Simplified Maintenance**: Using a single relational database reduces the complexity of managing multiple database services, making maintenance and updates easier.
-    - **Cost-Effective**: With fewer databases to manage, operational costs are reduced. The use of file-storage systems like AWS S3 is a scalable, low-cost option for handling large files like resumes.
-    - **Unified Data Access**: Storing all structured data in one database simplifies queries and data management across multiple domains, improving the overall efficiency of data access and retrieval.
-    - **Optimized for ClearView’s Scale**: Since ClearView is not expected to handle enormous amounts of data in the near term, this architecture strikes a balance between simplicity and performance.
+    - **Improved Security**: By separating data into different schemas, we can apply fine-grained access controls, ensuring that only authorized services and users can access sensitive data in each domain. For example, candidate data will be isolated from employer data, reducing the risk of unauthorized access.
+    - **Enhanced Fault-Tolerance**: Decoupling data into domain-specific schemas ensures that failures or issues in one domain (e.g., the matching service) do not affect other domains (e.g., candidate or employer data). This helps maintain system reliability and fault-tolerance.
+    - **Data Isolation**: Each schema is responsible for managing a specific domain’s data, reducing the risk of accidental data overlap or interference between domains. This simplifies auditing and ensures better data integrity.
+    - **Clear Separation of Concerns**: Separating data by schema aligns with domain-driven design principles, allowing each domain’s data model to evolve independently, with fewer cross-domain dependencies.
 
   - **Negative**:
-    - **Compromised Modularity**: Combining multiple domains into a single relational database can blur the boundaries between domains, reducing the modularity of the architecture. This may lead to challenges in maintaining data separation for different services.
-    - **Scaling Challenges**: While the current expected scale of ClearView is manageable with a single relational database, as the system grows, scaling the relational database for multiple domains could become a bottleneck. Future data growth may require revisiting this decision.
-    - **Potential Data Management Complexity**: As data volume and complexity increase, managing schemas, relationships, and migrations across multiple domains in a single database may become more challenging.
-    - **File and Relational Data Coordination**: Although resumes are stored separately, the coordination between the file storage system and the relational database must be carefully handled to ensure consistent and accurate access to both structured and unstructured data.
+    - **Increased Complexity**: Managing multiple schemas introduces additional complexity, particularly in handling database optimizations and managing queries that span multiple schemas. Schema-specific optimizations will need to be carefully designed to ensure performance is maintained.
+    - **Cross-Schema Queries**: Inter-schema queries, such as those required to join data between the candidate and matching schemas, can be more complex and may impact performance. Special care must be taken to optimize these cross-schema interactions.
+    - **Operational Overhead**: Schema management will require more sophisticated tooling and processes, including database migrations, backups, and monitoring. Ensuring consistency and security across schemas adds operational overhead.
+    - **Maintenance Complexity**: Over time, managing separate schemas may lead to increased administrative burden, especially when dealing with schema evolution, versioning, and updates.

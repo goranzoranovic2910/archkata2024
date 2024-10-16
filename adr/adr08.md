@@ -1,26 +1,27 @@
-### ADR 08: Split AI Tips, Anonymization, and Matching Services
+### ADR 08: Use Lightweight Authentication (OAuth2, Shiro)
 
-- **Title**: Split AI tips, Anonymization, and Matching services
+- **Title**: Use lightweight authentication (OAuth2, Shiro)
 - **Status**: Accepted
 - **Context**:  
-  ClearView’s system provides several key functionalities: **AI-driven tips** to help candidates improve their resumes and applications, **anonymization** to remove bias from resumes, and **skill matching services** to match candidates with job postings based on their skills. Initially, these functionalities could be tightly coupled within the same service. However, to simplify the architecture and improve scalability, the decision has been made to decouple these services, allowing them to operate independently. This separation ensures that the **AI tips service**, **anonymization service**, and the **matching service** can be scaled, maintained, and tested independently, reducing the risk of interference between these functionalities.
+  ClearView requires secure authentication mechanisms to protect access to its services, especially for candidates, employers, and administrators. While security is critical, the current scope and scale of the system do not justify the complexity and overhead of implementing a heavy-duty, enterprise-grade authentication solution. To keep the architecture simple and manageable while still ensuring secure access control, ClearView will implement **lightweight authentication mechanisms**, such as **OAuth2** or **Apache Shiro**. These solutions provide sufficient security for the current phase of the system without introducing unnecessary complexity, allowing for quick implementation and ease of maintenance.
 
 - **Decision**:  
-  The **AI tips**, **anonymization**, and **matching services** will be split into three independent services:
-  1. **AI Tips Service**: Responsible for generating candidate-specific tips and suggestions based on the content of their resumes and job applications. This service leverages AI models to analyze resumes and provide feedback on how candidates can improve their profiles to better match job descriptions.
-  2. **Anonymization Service**: Responsible for removing personal and bias-inducing details from candidate resumes, using LLMs to intelligently anonymize the data while maintaining a compelling, coherent presentation. This service ensures that employers receive only anonymized resumes.
-  3. **Matching Service**: Responsible for matching candidates to job postings based on their skills and the job requirements. This service uses algorithms like cosine similarity or LLM-based models to match skills between candidates and job ads, returning a match score.
+  ClearView will use **lightweight authentication** for managing access to its services, with **OAuth2** or **Apache Shiro** being the preferred options:
+  1. **OAuth2**: Provides an industry-standard, secure, and simple protocol for token-based authentication, making it easy to integrate with external identity providers (e.g., Google, GitHub) and enabling single sign-on (SSO) capabilities if needed.
+  2. **Apache Shiro**: Offers a lightweight framework for authentication, authorization, cryptography, and session management, making it a flexible choice for smaller systems or those requiring simple access control.
 
-  Decoupling these services ensures that each can evolve independently and allows for better separation of concerns. The AI tips service focuses on candidate improvement, the anonymization service ensures bias-free resumes, and the matching service focuses on pairing candidates with jobs.
+  These solutions offer sufficient security for ClearView’s current requirements while minimizing complexity and reducing development time.
 
 - **Consequences**:
   - **Positive**:
-    - **Simplified Scaling**: Each service can be scaled independently based on demand. For instance, the AI tips service may require more resources if candidate interaction increases, while the anonymization service may scale based on resume submissions.
-    - **Improved Separation of Concerns**: Decoupling ensures that the functionality of providing AI tips, anonymizing resumes, and skill matching are isolated from each other, improving modularity and separation of concerns.
-    - **Easier Maintenance**: Each service can be maintained and updated independently, reducing the risk of changes in one service affecting the other services.
-    - **Better Testability**: Independent services are easier to test in isolation, improving the reliability and robustness of each service without the overhead of testing interactions between multiple concerns.
+    - **Simplicity**: Lightweight authentication solutions like OAuth2 or Shiro are simpler to implement, reducing development and operational overhead. This ensures that authentication does not become a bottleneck in the system’s development.
+    - **Cost-Efficient**: These solutions provide a cost-effective way to implement secure authentication without the need for complex identity management systems.
+    - **Scalable for Current Needs**: OAuth2 and Shiro provide enough flexibility and scalability for the current scope of the ClearView system, supporting candidate and employer authentication, as well as administrative access.
+    - **Easy Integration**: OAuth2, in particular, integrates well with third-party identity providers (e.g., Google, Facebook), allowing for future extensibility and support for single sign-on (SSO) if required.
+    - **Secure by Default**: Both OAuth2 and Shiro have strong, built-in security features, ensuring that basic authentication and session management are secure out of the box.
 
   - **Negative**:
-    - **Increased Complexity in Integration**: Splitting the services introduces the need for careful orchestration and communication between them. For example, if AI tips, anonymization, and matching logic need to interact, the integration could become complex.
-    - **Dependency Management**: Managing dependencies between the services (e.g., anonymization feeding into matching) will require additional coordination, which could introduce latency and performance challenges.
-    - **Service Orchestration Overhead**: Running three separate services requires careful orchestration to ensure they operate seamlessly, potentially increasing operational overhead in terms of monitoring, scaling, and error handling.
+    - **Limited for Large-Scale or Complex Systems**: As the system grows or if there are future needs for more robust user management (e.g., advanced user roles, multi-factor authentication), these lightweight solutions may need to be upgraded or replaced with more complex, enterprise-grade systems, such as Keycloak or Okta.
+    - **Migration Overhead**: If the system outgrows the capabilities of OAuth2 or Shiro, migrating to a more advanced authentication solution could introduce technical debt and migration challenges. This includes the complexity of migrating user accounts, tokens, and sessions to a new system.
+    - **OAuth2 Token Management Complexity**: Although OAuth2 is lightweight, token management can introduce complexity, particularly with token expiration, refresh tokens, and managing multiple token flows (authorization code, client credentials, etc.).
+    - **Potential Security Limitations**: While secure, these solutions may lack some of the advanced security features offered by larger identity management platforms, such as integrated audit logging, fine-grained access control, or built-in multi-factor authentication.

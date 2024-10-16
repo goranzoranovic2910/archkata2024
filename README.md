@@ -2,7 +2,7 @@
  
 ## Equi Hire Architects Team
 
-We are a team of software engineers from Microsoft Serbia very passionate about software architecture. We have been practicing architectural katas inside our team inspired by books and videos from Neal Ford and Mark Richards. This time we decided to challenge ourselves and participate in official event.
+We are a team of software engineers from Microsoft Serbia passionate about software architecture. We have been practicing architectural katas within our team, drawing inspiration from books and videos by Neal Ford and Mark Richards. This time, we decided to challenge ourselves by participating in an official event.
 
 - [Uros Milivojevic](https://www.linkedin.com/in/urosmilivojevic/)
 - [Marjan Slavkovski](https://www.linkedin.com/in/marjan-s/)
@@ -104,20 +104,33 @@ Diversity Cyber Council (https://www.diversitycybercouncil.com/) is a 501c3 Non-
 High level requirements are listed in this document:
 [Requirements](https://docs.google.com/document/d/1jCHMAvgzqaYaAp09br12OC4ozpVXZR3s9ezgEqncZ9U/edit#heading=h.jsoimuz95gvo)
 
-Additionally, through communication with stakeholders we found few other requirements:
+Additionally, through communication with stakeholders we found several other requirements:
 
-- Cost is important aspect and we should aim to reduce it.
-- Big volumes of users are not expected so scalability is not very important.
-- There is a possibility of potential adding new AI features in the future, but it is not hard requirement.
-- System will be maintained by current Diversity Cyber Council IT team
+- Due to the nature of our customer being a Non-Profit organization cost of the solution is an important aspect, and we should aim to reduce it.
+- Based on market research done by our subject matter expert big volumes of users are not expected, so scalability is not very important.
+- There is a possibility of potential adding new AI features in the future, although this is not a hard requirement we should aim to allow greater extendibility for this part of the system.
+- System will be maintained by current Diversity Cyber Council IT team.
+
+The following are our assumptions and considerations based on our understanding of the business problem and the client. These could be reviewed more with subject matter experts in the future to solidify our understanding but we are using them as given due to limited time constraints of the competition:
+- The employee will be given the top candidates once per Job Ad. This requirement was made because it allows for easiest integration with other HR systems (no live updates that need tracking, no changes in candidates simplifies the response) which is an important ask from the perspective of the employer.
+- Security of the system should be additionally heightened due to dealing with secure personal candidate data.
+- Considering that our solution is based on AI technologies which are probabilistic by nature, we need to make sure that our solution gives good quality results which are not biased and are following responsible AI guidelines.
 
 ## Identifying architecture characteristics 
 
-Taking into account all requirements we decided that 3 main characteristics for our solution should be: **Cost, Interoperability and Simplicity.**
+Taking into account all requirements we decided that 3 main characteristics for our solution should be: **Cost, Interoperability and Simplicity.** Cost and simplicity are paramount due to our client being a non-profit organization with limited resources available for funding implementation and maintenance of the solution. Considering that the main value proposition of our solution is allowing companies to seamlessly integrate ClearView within their HR systems, Interoperability is also chosen as a main characteristic of the system.
 
 Besides these we consider *Fault-tolerance, Evolvabilty, Scalability, Testability, Workflow and Abstraction.*
 
-*Reliablity* is also important as one of composite characteristis.
+Testability of the system is important for increasing security and reliability of our solution. We have higher security requirements due to dealing with very sensitive personal data (CVs). Additionally increased testability will help us with making sure that our AI driven solution gives good quality results.
+
+Evolvability is also an important characteristic because of the requirement to potentially add new AI features in the future. AI technologies are rapidly changing and we need to allow our system to be ready for those changes.
+
+Fault-tolerance is not the most important characteristic because even if our system temporarily stops operating due to a component failing it will not have big life related consequences and reliability is more important to us from availability. But on the other hand, we do have different types of users and many different parts of the system, so from a user experience perspective it would be good to not have some basic resistance in case some component fails.
+
+After consulting with the subject matter expert regarding the expected volume of users, we concluded that with only 5000 candidates and several hundred employees scalability and elasticity are not driving characteristic. Our biggest processing bottleneck is the matching service, With the expected volume of users and the requirement that we only do the matching once per Job Ad we don't expect sudden changes in processing requirement, which also leads to elasticity not being our primary goal.
+
+*Reliablity* is also important as a composite characteristic.
 
 
 <img src="worksheets/architecture_characteristis.png">
@@ -145,6 +158,7 @@ classDiagram
     class Resume
     class Tip
     class Job
+    class JobApplication
 
     %% Candidate and Company Group
     class Skill
@@ -164,25 +178,28 @@ classDiagram
     class Survey
 
     %% Relationships
-    Candidate "1" -- "0..1" Resume : has
-    Resume "1" -- "*" Tip : has
-    
-    
-    Candidate "1" -- "*" Skill : possesses
-    
-    Company "1" -- "*" Job : posts
-    Job "1" -- "*" Skill : requires
-    Company "1" -- "*" Matching : uses
-    Candidate "1" -- "*" Matching : participates in
-    Job "1" -- "*" Matching : involved in
-    Company "1" -- "*" Payment : makes
-    Payment "1" -- "1" Resume : unlocks
-    BusinessReport "1" -- "*" Company : analyzes
-    ServiceReport "1" -- "*" Candidate : analyzes
-    ServiceReport "1" -- "*" Company : analyzes
-    Survey "1" -- "*" Candidate : taken by
-    Survey "1" -- "*" Company : conducted by
+    Candidate -- Resume
+    Resume -- Tip
+    Candidate -- JobApplication
+    Job -- JobApplication
+    Candidate -- Skill
+    Company -- Job
+    Job -- Skill
+    Company -- Matching
+    Candidate -- Matching
+    Job -- Matching
+    Company -- Payment
+    Payment -- Resume
+    BusinessReport -- Company
+    ServiceReport -- Candidate
+    ServiceReport -- Company
+    Survey -- Candidate
+    Survey -- Company
 ```
+<div align="center"><i>Domain Model</i></div>
+<br/>
+
+Detailed model is available on <a href="models/domain_model.md">Domain Model</a> page.
 
 We landed on next domains:
 - **Candidate** : Covering flow related to candidate: creating profile, uploading and iterating on resume, overview of matches.
@@ -236,6 +253,8 @@ graph TD
       O  
     end
 ```
+<div align="center"><i>Top Level Architecture - Component Diagram</i></div>
+<br/>
 
 - **ClearView Frontend** - top layer using unified APIs which are hiding complexity of the system below.
 - **ClearView unified API** - top level abstraction to be used for integration with HR apps. Clear view can have its own front end hooking up to this layer.
@@ -254,21 +273,17 @@ graph TD
 
 Here is the condensed list of all ADRs we made during the process to came up with architecture we designed. Full ADRs can be found through links in the table.
 
-| ADR # | Title                                                                                                      | Why                                                                                                                                                                            | Trade-offs                                                                                                                                                                                                                                                                                                    | Link                             |
+| ADR # | Title                                                                                                      | Why                                                                                                                                                                            | Trade-offs                                                                                                                                                                                                                                                                                                    | Link to Detailed ADR                             |
 | ----- | ---------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
 | 01    | Chosen architecture characteristics: cost, interoperability, simplicity, fault-tolerance, and evolvability | Prioritized cost, interoperability, simplicity, fault-tolerance, and evolvability based on problem statement.                                                                  | May require trade-offs between simplicity and evolvability over time, potentially limiting flexibility as requirements grow.                                                                                                                                                                                  | <a href="adr/adr01.md">ADR01</a> |
 | 02    | Service-Based Architecture selected                                                                        | Service-based architecture chosen to align with prioritized characteristics (cost, fault-tolerance, scalability).                                                              | Increased complexity in service orchestration and operational overhead compared to a monolithic approach. This level of complexity is needed to allow enough evolvability of system. Reduced scalability compared to microservices of event-driven architecture to optimize more for cost and expected scale. | <a href="adr/adr02.md">ADR02</a> |
 | 03    | Organize components per domain                                                                             | Organizes ClearView components into domain-specific groups (candidate, employer, matching, etc.) to separate concerns effectively and improve maintainability and testability. | Requires managing inter-domain communication and potentially increasing complexity if domains grow interdependent.                                                                                                                                                                                            | <a href="adr/adr03.md">ADR03</a> |
-| 04    | Unified API with multiple endpoints                                                                        | Simplifies architecture by having a single API with various endpoints for different functionalities.                                                                           | Can lead to large, complex APIs over time, making it harder to maintain clear boundaries between services. Reducing number of API services to one instead of multiple (one for each domain).                                                                                                                  | <a href="adr/adr04.md">ADR04</a> |
-| 05    | One relational database and one file-storage DB                                                            | Simplifies maintenance by reducing the number of databases, combining multiple domains into one relational DB.                                                                 | Resumes need separate file storage.	May compromise modularity and separation of concerns between domains, leading to potential scaling or data management challenges later. However big scalability is not expected so we feel comfortable in making this decision.                                           | <a href="adr/adr05.md">ADR05</a> |
-| 06    | Split database by schema to decouple domains and improve security                                          | Improves fault-tolerance and security by separating candidate, employer, matching, and analytics data into schemas.                                                            | More complex database management, requiring careful handling of schema-specific optimizations and inter-schema queries.                                                                                                                                                                                       | <a href="adr/adr06.md">ADR06</a> |
-| 07    | Analytics as part of regular database                                                                      | Simplifies architecture by embedding analytics within the regular database, avoiding real-time analytics complexity.                                                           | May limit future analytics capabilities if real-time or advanced analytics are needed, and could add extra load to the operational database. However, it should be fairly easy to move this data to separate database if needed.                                                                              | <a href="adr/adr07.md">ADR07</a> |
-| 08    | Split Anonymization, AI tips and matching services                                                         | Decouples Anonymization, AI tips and matching services, making the system simpler and easier to scale independently.                                                           | Requires coordination between services and careful orchestration of dependencies if they need to interact, adding complexity in integration. On the other hand we improve separation of concerns, maintaining and testability.                                                                                | <a href="adr/adr08.md">ADR08</a> |
-| 09    | Matching once per Job Ad deadline                                                                          | Matches candidates once per job ad deadline, aligning with employer expectations and simplifying processing pipelines.                                                         | Delays real-time candidate matching and feedback loops, making the system less responsive to changes in candidate or job availability during the job lifecycle. However, it dramatically reduces costs of processing. If needed, processing can be invoked through Matching API on demand.                    | <a href="adr/adr09.md">ADR09</a> |
-| 10    | Configurable top N candidates for employers                                                                | Allows employers to see the top N candidates, making "N" configurable, ensuring scalability and reducing DB overload.                                                          | Complexity in configuring "N" dynamically across jobs; potential risk if "N" is set too high or too low for specific job listings, affecting employer satisfaction.                                                                                                                                           | <a href="adr/adr10.md">ADR10</a> |
-| 11    | Use lightweight authentication (OAuth2, Shiro)                                                             | Implements simple and lightweight authentication to reduce complexity while securing access to services.                                                                       | May require upgrades to a more robust solution if security or user management needs increase, adding migration overhead later.                                                                                                                                                                                | <a href="adr/adr11.md">ADR11</a> |
-| 12    | Use Third party solution for Survey and Payment                                                            | There are good existing solutions for this problem so we can reuse and reduce costs.                                                                                           | Hard to customize and extend, but no maintenance and cost is low.                                                                                                                                                                                                                                             | <a href="adr/adr12.md">ADR12</a> |
-| 13    | Use Cosine Similarity for Initial Matching                                                                 | Cost-efficient and predictable for initial implementation, with flexibility for future LLM integration.                                                                        | Limited contextual understanding and potential costs when switching to LLM-based models in the future.                                                                                                                                                                                                        | <a href="adr/adr13.md">ADR13</a> |
+| 04    | One relational database and one file-storage DB                                                            | Simplifies maintenance by reducing the number of databases, combining multiple domains into one relational DB.                                                                 | Resumes need separate file storage.	May compromise modularity and separation of concerns between domains, leading to potential scaling or data management challenges later. However big scalability is not expected so we feel comfortable in making this decision.                                           | <a href="adr/adr04.md">ADR04</a> |
+| 05    | Split database by schema to decouple domains and improve security                                          | Improves fault-tolerance and security by separating candidate, employer, matching, and analytics data into schemas.                                                            | More complex database management, requiring careful handling of schema-specific optimizations and inter-schema queries.                                                                                                                                                                                       | <a href="adr/adr05.md">ADR05</a> |
+| 06    | Analytics as part of regular database                                                                      | Simplifies architecture by embedding analytics within the regular database, avoiding real-time analytics complexity.                                                           | May limit future analytics capabilities if real-time or advanced analytics are needed, and could add extra load to the operational database. However, it should be fairly easy to move this data to separate database if needed.                                                                              | <a href="adr/adr06.md">ADR06</a> |
+| 07    | Split Anonymization, AI tips and matching services                                                         | Decouples Anonymization, AI tips and matching services, making the system simpler and easier to scale independently.                                                           | Requires coordination between services and careful orchestration of dependencies if they need to interact, adding complexity in integration. On the other hand we improve separation of concerns, maintaining and testability.                                                                                | <a href="adr/adr07.md">ADR07</a> |
+| 08    | Use lightweight authentication (OAuth2, Shiro)                                                             | Implements simple and lightweight authentication to reduce complexity while securing access to services.                                                                       | May require upgrades to a more robust solution if security or user management needs increase, adding migration overhead later.                                                                                                                                                                                | <a href="adr/adr08.md">ADR08</a> |
+| 09    | Use Third party solution for Survey and Payment                                                            | There are good existing solutions for this problem so we can reuse and reduce costs.                                                                                           | Hard to customize and extend, but no maintenance and cost is low.                                                                                                                                                                                                                                             | <a href="adr/adr09.md">ADR09</a> |
 
 ## AI Backend
 
@@ -283,8 +298,6 @@ This will be achieved through improvements in:
 - Language Enhancement and Clarification**
 - Formatting Suggestions
 and many others
-
-#### Flow diagram
 
 ``` mermaid
 graph TD
@@ -302,8 +315,8 @@ graph TD
     D --> L[End]
     K --> L
 ```
-
-#### Sequence diagram
+<div align="center"><i>AI Tips - Flow Diagram</i></div>
+<br/>
 
 ``` mermaid
 sequenceDiagram
@@ -333,6 +346,8 @@ sequenceDiagram
     U->>CE: Update Resume
     CE->>DB: Remove Stored Tips
 ```
+<div align="center"><i>AI Tips - Sequence Diagram</i></div>
+<br/>
 
 ### Analysis of LLM Usage for AI-Tips
 
@@ -354,7 +369,7 @@ sequenceDiagram
 
 |ADR #| 	Title| 	Why |	Trade-offs 	| Link |
 |------|----------|-----|--------------|------|
-|08 |	Split Anonymization, AI tips and matching services |	Decouples Anonymization, AI tips and matching services, making the system simpler and easier to scale independently.  |	Requires coordination between services and careful orchestration of dependencies if they need to interact, adding complexity in integration. On the other hand we improve separation of concerns, maintaining and testability.|	<a href="adr/adr08.md">ADR08</a>|
+|07 |	Split Anonymization, AI tips and matching services |	Decouples Anonymization, AI tips and matching services, making the system simpler and easier to scale independently.  |	Requires coordination between services and careful orchestration of dependencies if they need to interact, adding complexity in integration. On the other hand we improve separation of concerns, maintaining and testability.|	<a href="adr/adr07.md">ADR07</a>|
 
 ### Anonymization Service
 
@@ -396,6 +411,7 @@ flowchart TD
     D --> E[LLM Creates Compelling Anonymized Resume]
     E --> F[Save Anonymized Resume in File Storage]
 ```
+<div align="center"><i>Resume Anonymization - Flow Diagram</i></div>
 
 #### Conclusion
 
@@ -423,6 +439,8 @@ graph TD
         C
     end
 ```
+<div align="center"><i>Matching Service - Component Diagram</i></div>
+<br/>
 
 #### Matching API Endpoint
 
@@ -433,10 +451,6 @@ The main entry point to the Matching Service. It provides methods to:
 
 #### Triggering
 Matching is done per job advertisement once it is closed to optimize cost. It could be also triggered on demand if business needs are such. We want to avoid multiple passes and redundant processes this way. 
-
-|ADR #| 	Title| 	Why |	Trade-offs 	| Link |
-|------|----------|-----|--------------|------|
-|09 	|Matching once per Job Ad deadline 	|Matches candidates once per job ad deadline, aligning with employer expectations and simplifying processing pipelines. |	Delays real-time candidate matching and feedback loops, making the system less responsive to changes in candidate or job availability during the job lifecycle. However, it dramatically reduces costs of processing. If needed, processing can be invoked through Matching API on demand.	|<a href="adr/adr09.md">ADR09</a>|
 
 #### Matching Process
 
@@ -449,6 +463,8 @@ graph LR
     C --> D[Score Candidate Job Match]
     D --> E[Store Match Score in Database]
 ```
+<div align="center"><i>Matching Process - Flow Diagram</i></div>
+<br/>
 
 #### Matching API
 
@@ -494,6 +510,8 @@ Fetch the extracted skills for a candidate based on their CandidateId. Output is
 ```
 GET api/matching/candidates/{candidate_id}/skills
 ```
+<div align="center"><i>Skill extraction - Class Diagram</i></div>
+<br/>
 
 ### Scoring Logic
 Scoring candidates against job ads is a complex task, with many potential approaches. Given ClearView’s emphasis on cost-efficiency, we favor solutions that are cost-effective while providing the flexibility to adopt different strategies.
@@ -523,11 +541,6 @@ Decision:
 
 For the initial implementation, **Cosine Similarity** will be used due to its cost-efficiency and predictability. However, the system will be designed to support alternative matching strategies such as **LLM-based matching**. This flexibility will allow us to switch or enhance the matching logic as the system evolves.
 
-
-| ADR # |Title| 	Why |	Trade-offs 	| Link |
-|------|----------|-----|--------------|-----|	
-| 13  | Use Cosine Similarity for Initial Matching  | Cost-efficient and predictable for initial implementation, with flexibility for future LLM integration.        | Limited contextual understanding and potential costs when switching to LLM-based models in the future. |<a href="adr/adr13.md">ADR13</a>|
-
 Here is a class diagram representing the Scoring Logic using the Strategy Pattern for implementing both LLM Strategy and Cosine Similarity Strategy.
 
 ``` mermaid
@@ -554,6 +567,8 @@ classDiagram
     MatchingStrategy <|-- CosineSimilarityStrategy
     MatchingStrategy <|-- LLMStrategy
 ```
+<div align="center"><i>Scoring Logic - Class Diagram</i></div>
+<br/>
 
 Explanation:
 
@@ -579,6 +594,8 @@ graph LR
     E --> F[LLM Similarity Score]    
     F --> G[Store Match Score in Database]
 ```
+<div align="center"><i>Hybrid Matching - Flow Diagram</i></div>
+<br/>
 
 ## Integration
 
@@ -643,11 +660,12 @@ graph TD
         E4 --> F3
     end
 ```
+<div align="center"><i>External Systems Integration - Component Diagram</i></div>
+<br/>
 
 | ADR # | Title                                           | Why                                                                                                  | Trade-offs                                                                                                                                                                                   | Link                             |
 | ----- | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
-| 04    | Unified API with multiple endpoints             | Simplifies architecture by having a single API with various endpoints for different functionalities. | Can lead to large, complex APIs over time, making it harder to maintain clear boundaries between services. Reducing number of API services to one instead of multiple (one for each domain). | <a href="adr/adr04.md">ADR04</a> |
-| 12    | Use Third party solution for Survey and Payment | There are good existing solutions for this problem so we can reuse and reduce costs.                 | Hard to customize and extend, but no maintenance and cost is low.                                                                                                                            | <a href="adr/adr12.md">ADR12</a> |
+| 08    | Use Third party solution for Survey and Payment | There are good existing solutions for this problem so we can reuse and reduce costs.                 | Hard to customize and extend, but no maintenance and cost is low.                                                                                                                            | <a href="adr/adr08.md">ADR08</a> |
 
 ## Unified API
 
@@ -658,7 +676,6 @@ graph TD
 | ADR # | Title                               | Why                                                                                                                                                                            | Trade-offs                                                                                                                                                                                   | Link                             |
 | ----- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
 | 03    | Organize components per domain      | Organizes ClearView components into domain-specific groups (candidate, employer, matching, etc.) to separate concerns effectively and improve maintainability and testability. | Requires managing inter-domain communication and potentially increasing complexity if domains grow interdependent.                                                                           | <a href="adr/adr03.md">ADR03</a> |
-| 04    | Unified API with multiple endpoints | Simplifies architecture by having a single API with various endpoints for different functionalities.                                                                           | Can lead to large, complex APIs over time, making it harder to maintain clear boundaries between services. Reducing number of API services to one instead of multiple (one for each domain). | <a href="adr/adr04.md">ADR04</a> |
 
 #### Account Management
 
@@ -834,13 +851,14 @@ graph TD
         I --> M
     end
 ```
+<div align="center"><i>Employer Functionality - Component Diagram</i></div>
+<br/>
 
 **Related ADRs**
 
 | ADR # | Title                               | Why                                                                                                                                                                            | Trade-offs                                                                                                                                                                                   | Link                             |
 | ----- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
 | 03    | Organize components per domain      | Organizes ClearView components into domain-specific groups (candidate, employer, matching, etc.) to separate concerns effectively and improve maintainability and testability. | Requires managing inter-domain communication and potentially increasing complexity if domains grow interdependent.                                                                           | <a href="adr/adr03.md">ADR03</a> |
-| 04    | Unified API with multiple endpoints | Simplifies architecture by having a single API with various endpoints for different functionalities.                                                                           | Can lead to large, complex APIs over time, making it harder to maintain clear boundaries between services. Reducing number of API services to one instead of multiple (one for each domain). | <a href="adr/adr04.md">ADR04</a> |
 
 #### 2. Employer Registration and Management
 
@@ -931,6 +949,10 @@ The `Download Anonymized Candidate Resume` method allows an employer to retrieve
 ```
 GET /api/employer/{employer_id}/candidates/{candidate_id}/resume
 ```
+
+| ADR # | Title                               | Why                                                                                                                                                                            | Trade-offs                                                                                                                                                                                   | Link                             |
+| ----- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
+| 03    | Organize components per domain      | Organizes ClearView components into domain-specific groups (candidate, employer, matching, etc.) to separate concerns effectively and improve maintainability and testability. | Requires managing inter-domain communication and potentially increasing complexity if domains grow interdependent.                                                                           | <a href="adr/adr03.md">ADR03</a> |
 
 The `Download Unlocked Candidate Resume` method allows an employer to retrieve an unlocked candidate resume that has been paid for or otherwise authorized.
 
@@ -1075,6 +1097,8 @@ classDiagram
     AdministratorEndpoint --> MatchingService : Update Matching Strategy
     AdministratorEndpoint --> User : Manage User Data
 ```
+<div align="center"><i>Administrator Functionality - Class Diagram</i></div>
+<br/>
 
 How It Works:
 
@@ -1225,138 +1249,15 @@ This job could potentially be triggered by schedule in Database, however, based 
 
 ## Storage
 ### Database
-
-Based on domain we modeled this is the database structure we designed.
-
-```mermaid
-%%{init: {
-  'theme': 'dark',
-  'themeVariables': {
-    'primaryColor': '#BB86FC',
-    'primaryTextColor': '#fff',
-    'primaryBorderColor': '#fff',
-    'lineColor': '#fff',
-    'secondaryColor': '#03DAC6',
-    'tertiaryColor': '#333333',
-    'textColor': '#fff'
-  }
-}}%%
-erDiagram
-    CANDIDATE ||--o| RESUME : has
-    RESUME ||--o{ TIP : has
-    CANDIDATE ||--o{ CANDIDATE_SKILL : possesses
-    SKILL ||--o{ CANDIDATE_SKILL : possessed_by
-    COMPANY ||--o{ JOB : posts
-    JOB ||--o{ JOB_SKILL : requires
-    SKILL ||--o{ JOB_SKILL : required_by
-    COMPANY ||--o{ MATCHING : uses
-    CANDIDATE ||--o{ MATCHING : participates_in
-    JOB ||--o{ MATCHING : involved_in
-    COMPANY ||--o{ PAYMENT : makes
-    PAYMENT ||--|| RESUME : unlocks
-    BUSINESS_REPORT ||--o{ COMPANY : analyzes
-    SERVICE_REPORT ||--o{ CANDIDATE : analyzes
-    SERVICE_REPORT ||--o{ COMPANY : analyzes
-    SURVEY ||--o{ CANDIDATE : taken_by
-    SURVEY ||--o{ COMPANY : conducted_by
-
-    CANDIDATE {
-        int candidate_id PK
-        string name
-        string email
-        string phone
-        date date_of_birth
-    }
-
-    RESUME {
-        int resume_id PK
-        int candidate_id FK
-        string resume_url
-        date last_updated
-    }
-
-    TIP {
-        int tip_id PK
-        int resume_id FK
-        string content
-        date created_at
-    }
-
-    JOB {
-        int job_id PK
-        int company_id FK
-        string title
-        string description
-        date posted_date
-        string status
-    }
-    
-    SKILL {
-        int skill_id PK
-        string name
-        string category
-    }
-
-    CANDIDATE_SKILL {
-        int candidate_id FK
-        int skill_id FK
-    }
-
-    JOB_SKILL {
-        int job_id FK
-        int skill_id FK
-    }
-
-    COMPANY {
-        int company_id PK
-        string name
-        string industry
-        string location
-    }
-
-    MATCHING {
-        int matching_id PK
-        int company_id FK
-        int candidate_id FK
-        int job_id FK
-        float match_score
-        date matched_date
-    }
-
-    PAYMENT {
-        int payment_id PK
-        int company_id FK
-        int resume_id FK
-        decimal amount
-        date payment_date
-    }
-
-    BUSINESS_REPORT {
-        int report_id PK
-        int company_id FK
-        date report_date
-        blob report_content
-    }
-
-    SERVICE_REPORT {
-        int report_id PK
-        date report_date
-        blob report_content
-    }
-
-    SURVEY {
-        int survey_id PK
-        string survey_type
-        date survey_date
-        blob survey_content
-    }
-```
+Database is designed by following principles explained in ADRs below.
 
 |ADR #| 	Title| 	Why |	Trade-offs 	| Link |
 |------|----------|-----|--------------|-----|	
-|05 |	One relational database and one file-storage DB |	Simplifies maintenance by reducing the number of databases, combining multiple domains into one relational DB.| Resumes need separate file storage.	May compromise modularity and separation of concerns between domains, leading to potential scaling or data management challenges later. However big scalability is not expected so we feel comfortable in making this decision.	|<a href="adr/adr05.md">ADR05</a>|
-|06 |	Split database by schema to decouple domains and improve security|	Improves fault-tolerance and security by separating candidate, employer, matching, and analytics data into schemas. |	More complex database management, requiring careful handling of schema-specific optimizations and inter-schema queries. |	<a href="adr/adr06.md">ADR06</a>|
-|07 |	Analytics as part of regular database| 	Simplifies architecture by embedding analytics within the regular database, avoiding real-time analytics complexity. |	May limit future analytics capabilities if real-time or advanced analytics are needed, and could add extra load to the operational database. However, it should be fairly easy to move this data to separate database if needed.|	<a href="adr/adr07.md">ADR07</a>|
+|04 |	One relational database and one file-storage DB |	Simplifies maintenance by reducing the number of databases, combining multiple domains into one relational DB.| Resumes need separate file storage.	May compromise modularity and separation of concerns between domains, leading to potential scaling or data management challenges later. However big scalability is not expected so we feel comfortable in making this decision.	|<a href="adr/adr04.md">ADR04</a>|
+|05 |	Split database by schema to decouple domains and improve security|	Improves fault-tolerance and security by separating candidate, employer, matching, and analytics data into schemas. |	More complex database management, requiring careful handling of schema-specific optimizations and inter-schema queries. |	<a href="adr/adr05.md">ADR05</a>|
+|06 |	Analytics as part of regular database| 	Simplifies architecture by embedding analytics within the regular database, avoiding real-time analytics complexity. |	May limit future analytics capabilities if real-time or advanced analytics are needed, and could add extra load to the operational database. However, it should be fairly easy to move this data to separate database if needed.|	<a href="adr/adr06.md">ADR06</a>|
+
+Detailed ER model is available on <a href="database/db_schema.md">Database Schema</a> page.
 
 ### Schema considerations
 
@@ -1375,7 +1276,7 @@ This would allow us to keep related data in single schema and help us in future 
 
 |ADR #| 	Title| 	Why |	Trade-offs 	| Link |
 |------|----------|-----|--------------|-----|	
-|06 |	Split database by schema to decouple domains and improve security|	Improves fault-tolerance and security by separating candidate, employer, matching, and analytics data into schemas. |	More complex database management, requiring careful handling of schema-specific optimizations and inter-schema queries. |	<a href="adr/adr06.md">ADR06</a>|
+|05 |	Split database by schema to decouple domains and improve security|	Improves fault-tolerance and security by separating candidate, employer, matching, and analytics data into schemas. |	More complex database management, requiring careful handling of schema-specific optimizations and inter-schema queries. |	<a href="adr/adr05.md">ADR05</a>|
 
 ### File Storage
 
@@ -1404,7 +1305,7 @@ In ClearView, file storage plays a pivotal role in securely managing candidate r
 
 |ADR #| 	Title| 	Why |	Trade-offs 	| Link |
 |------|----------|-----|--------------|-----|
-|05 |	One relational database and one file-storage DB |	Simplifies maintenance by reducing the number of databases, combining multiple domains into one relational DB.| Resumes need separate file storage.	May compromise modularity and separation of concerns between domains, leading to potential scaling or data management challenges later. However big scalability is not expected so we feel comfortable in making this decision.	|<a href="adr/adr05.md">ADR05</a>|
+|04 |	One relational database and one file-storage DB |	Simplifies maintenance by reducing the number of databases, combining multiple domains into one relational DB.| Resumes need separate file storage.	May compromise modularity and separation of concerns between domains, leading to potential scaling or data management challenges later. However big scalability is not expected so we feel comfortable in making this decision.	|<a href="adr/adr04.md">ADR04</a>|
 
 ## External services
 
@@ -1413,7 +1314,7 @@ We have chosen to use **external services** for both **payment processing** and 
 
 |ADR #| 	Title| 	Why |	Trade-offs 	| Link |
 |------|----------|-----|--------------|-----|		
-| 12 | Use Third party solution for Survey and Payment | There are good existing solutions for this problem so we can reuse and reduce costs. | Hard to customize and extend, but no maintenance and cost is low. |<a href="adr/adr12.md">ADR12</a>|
+| 09 | Use Third party solution for Survey and Payment | There are good existing solutions for this problem so we can reuse and reduce costs. | Hard to customize and extend, but no maintenance and cost is low. |<a href="adr/adr09.md">ADR09</a>|
 
 ## Additional considerations
 ### Evolvability
