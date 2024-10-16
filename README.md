@@ -35,10 +35,6 @@ We are a team of software engineers from Microsoft Serbia passionate about softw
       - [Triggering](#triggering)
       - [Matching Process](#matching-process)
       - [Matching API](#matching-api)
-        - [Get Job for Candidate](#get-job-for-candidate)
-        - [Get Job Skills](#get-job-skills)
-        - [Score Candidate Job Match](#score-candidate-job-match)
-        - [Store Matching Score](#store-matching-score)
       - [Skill extraction](#skill-extraction)
     - [Scoring Logic](#scoring-logic)
         - [Cosine Similarity](#cosine-similarity)
@@ -48,26 +44,11 @@ We are a team of software engineers from Microsoft Serbia passionate about softw
     - [Candidate Endpoint](#candidate-endpoint)
       - [Related ADRs](#related-adrs-1)
       - [Account Management](#account-management)
-        - [Register Candidate](#register-candidate)
-        - [Login Candidate](#login-candidate)
-        - [Get Candidate Profile](#get-candidate-profile)
-        - [Update Candidate Profile](#update-candidate-profile)
       - [Resume Management](#resume-management)
-        - [Upload Resume](#upload-resume)
-        - [Get Resume](#get-resume)
-        - [Delete Resume](#delete-resume)
       - [Anonymized Resume Management](#anonymized-resume-management)
-        - [Upload Anonymized Resume](#upload-anonymized-resume)
-        - [Get Anonymized Resume](#get-anonymized-resume)
-        - [Delete Anonymized Resume](#delete-anonymized-resume)
       - [AI Tips](#ai-tips)
         - [Get Resume Tips](#get-resume-tips)
       - [Job Matching](#job-matching)
-        - [Get Job Matches](#get-job-matches)
-        - [Retrieve filtered matches](#retrieve-filtered-matches)
-        - [Get Job Details](#get-job-details)
-      - [Job Applications](#job-applications)
-        - [Apply for Job](#apply-for-job)
     - [Employer Endpoint](#employer-endpoint)
       - [1. Overview](#1-overview)
       - [2. Employer Registration and Management](#2-employer-registration-and-management)
@@ -75,52 +56,17 @@ We are a team of software engineers from Microsoft Serbia passionate about softw
       - [4. HR System Integration](#4-hr-system-integration)
       - [5. Unified API CRUD Operations](#5-unified-api-crud-operations)
         - [Employer](#employer)
-          - [Register employer](#register-employer)
-          - [Retrieve Employer Details](#retrieve-employer-details)
-          - [Update Employer Information](#update-employer-information)
-          - [Deactivate Employer Profile](#deactivate-employer-profile)
-          - [Download Anonymized Candidate Resume](#download-anonymized-candidate-resume)
-        - [Download Unlocked Candidate Resume](#download-unlocked-candidate-resume)
         - [Job Ads](#job-ads)
-          - [Create Job Ad](#create-job-ad)
-          - [Retrieve Job Ads](#retrieve-job-ads)
-          - [Update Job Ad](#update-job-ad)
-          - [Remove Job Ad](#remove-job-ad)
-        - [Payments:](#payments)
-          - [Make Payment](#make-payment)
-          - [Retrieve Payment History](#retrieve-payment-history)
+        - [Payments](#payments)
         - [HR System Integration](#hr-system-integration)
-          - [Integrate with HR System](#integrate-with-hr-system)
-          - [Synchronize with HR System](#synchronize-with-hr-system)
     - [Administrator Endpoint](#administrator-endpoint)
       - [Administrator Endpoint Overview](#administrator-endpoint-overview)
-        - [Related ADRs](#related-adrs-2)
         - [Administrator Endpoint Methods](#administrator-endpoint-methods)
-          - [Update Candidate Hire Status](#update-candidate-hire-status)
-          - [Update User](#update-user)
-          - [Update Candidate](#update-candidate)
-          - [Update Employer](#update-employer)
-          - [Update Matching Strategy Configuration](#update-matching-strategy-configuration)
     - [Reporting Endpoint](#reporting-endpoint)
       - [1. Business Reporting](#1-business-reporting)
       - [Business Reporting API Methods](#business-reporting-api-methods)
-        - [Get Active Candidates](#get-active-candidates)
-        - [Get Active Employers](#get-active-employers)
-        - [Get Active Jobs](#get-active-jobs)
-        - [Get Score Vs Offer Comparison](#get-score-vs-offer-comparison)
-        - [Get Score Vs Reject Comparison](#get-score-vs-reject-comparison)
-        - [Get Demographic Offer Reject Breakdown](#get-demographic-offer-reject-breakdown)
-        - [Get Employer Survey Data](#get-employer-survey-data)
-        - [Get Candidate Survey Data](#get-candidate-survey-data)
       - [2. Service Review](#2-service-review)
         - [Service Review API Methods](#service-review-api-methods)
-        - [Get Errors Overview](#get-errors-overview)
-        - [Get Crashes Overview](#get-crashes-overview)
-        - [Get Service Downtime](#get-service-downtime)
-        - [Get LLM Latency](#get-llm-latency)
-        - [Get LLM Cost](#get-llm-cost)
-        - [Get LLM Capacity Usage](#get-llm-capacity-usage)
-      - [Triggering data aggregation](#triggering-data-aggregation)
   - [Storage](#storage)
     - [Database](#database)
     - [Schema considerations](#schema-considerations)
@@ -506,37 +452,15 @@ graph LR
 
 #### Matching API
 
-##### Get Job for Candidate
+Below is a simplified table for the Matching API methods. These are proposals on how we think the methods should look like; however, this is just an example and method names and types will vary depending on the implementation. For more details, please refer to the detailed [API documentation file](/apis/matching_api.md).
 
-Retrieve the list of jobs that the candidate applied to. The job data includes the job requirements and expected skills.
+| Method        | Endpoint                 | Description                        |
+|---------------|--------------------------|------------------------------------|
+| GET           | /api/matching/jobs       | Retrieve a list of jobs.           |
+| POST          | /api/matching/jobs       | Create a new job listing.          |
+| GET           | /api/matching/candidates | Retrieve a list of candidates.     |
+| POST          | /api/matching/match      | Match a candidate to a job.        |
 
-```
-GET api/matching/candidates/{candidate_id}/jobs
-```
-
-##### Get Job Skills
-
-Extract the required skills for the job from the `job_id`. Output is a map of skills. Example: `{Java: Expert, SQL: Intermediate}`
-
-```
-GET api/matching/jobs/{job_id}/skills
-```
-
-##### Score Candidate Job Match
-
-Compare the candidate’s skills with the job’s required skills. Use Cosine Similarity to compute a score (1-100%) that represents the candidate’s fit for the job.
-
-```
-GET api/matching/candidates/{candidate_id}/jobs/{job_id}/score
-```
-
-##### Store Matching Score
-
-Save the calculated score in the database, linking the CandidateId, JobAdId, and the score. Example: `{candidate_id: 123, job_id: 456, score: 85}`
-
-```
-PUT api/matching/candidates/{candidate_id}/jobs/{job_id}/score
-```
 
 #### Skill extraction
 
@@ -703,94 +627,35 @@ graph TD
 
 #### Account Management
 
-##### Register Candidate
+Below is a simplified table for the Account Management API methods. These are intended to provide an example of how the account management endpoints could be structured, but the exact method names and types may vary based on the final implementation. For more details, please refer to the [detailed Account Management API documentation](apis/account_management_api.md).
 
-```
-POST /api/candidates/register
-```
-
-The `Register Candidate` method allows a new candidate to create an account by providing their email, password, first name, last name, and phone number. Upon successful registration, the candidate's details are stored, and a unique candidate ID is generated. The response includes the candidate's ID, email, first name, last name, and the account creation timestamp in ISO 8601 format. For more details please visit [candidate API specs](/apis/candidate.md).
-
-##### Login Candidate
-
-```
-POST /api/candidates/login
-```
-
-The `Login Candidate` method allows a registered candidate to log in by providing their credentials. Upon successful authentication, the candidate can access subsequent APIs. The specific method of authentication and session management may vary depending on the implementation decision, and other types of authentication can be used as an implementation detail. For more details please visit [candidate API specs](/apis/candidate.md).
-
-##### Get Candidate Profile
-
-```
-GET /api/candidates/profile
-```
-
-The Get Candidate Profile method allows an authenticated candidate to retrieve their profile information. The request must include an authorization header with the candidate's token. Upon successful retrieval, the response includes the candidate's ID, email, first name, last name, and phone number. For more details, please visit [candidate API specs](/apis/candidate.md).
-
-##### Update Candidate Profile
-
-```
-PUT /api/candidates/profile
-```
-
-The `Update Candidate Profile` method allows an authenticated candidate to update their profile information. The request must include an authorization header with the candidate's token. The request body should contain the fields to be updated, such as `firstName`, `lastName`, and `phoneNumber`. Upon successful update, the response includes the candidate's ID, email, first name, last name, phone number, and the timestamp of the last update in ISO 8601 format. For more details, please visit [candidate API specs](/apis/candidate.md).
+| Method        | Endpoint                  | Description                                        |
+|---------------|---------------------------|----------------------------------------------------|
+| POST          | /api/candidates/register  | Register a new candidate.                          |
+| POST          | /api/candidates/login     | Log in a registered candidate.                     |
+| GET           | /api/candidates/profile   | Retrieve the profile of the authenticated candidate.|
+| PUT           | /api/candidates/profile   | Update the profile of the authenticated candidate.  |
 
 #### Resume Management
 
-##### Upload Resume
+Below is a table summarizing the key API methods for the Resume Management module. These methods illustrate how resumes are uploaded, retrieved, updated, and managed in the system. The exact endpoints and implementations may vary, but this table provides a general overview of the available operations. For more details, please refer to the [detailed Account Management API documentation](apis/resume_management_api.md).
 
-``` 
-POST /api/candidates/resume
-```
-
-The `Upload Resume` method allows an authenticated candidate to upload their resume. The request must include an authorization header with the candidate's token and use `multipart/form-data` for the request body. The request body should contain the resume file as a binary attachment. Upon successful upload, the response includes the resume's ID, file name, upload date in ISO 8601 format, and file size. For more details, please visit [candidate API specs](/apis/candidate.md).
-
-##### Get Resume
-
-``` 
-GET /api/candidates/resume
-```
-
-The `Get Resume` method allows an authenticated candidate to retrieve their uploaded resume. The request must include an authorization header with the candidate's token. Upon successful retrieval, the response includes the resume's ID, file name, upload date in ISO 8601 format, file size, and a download URL for the resume file. For more details, please visit [candidate API specs](/apis/candidate.md).
-
-##### Delete Resume
-
-```
-DELETE /api/candidates/resume
-```
-
-The `Delete Resume` method allows an authenticated candidate to delete their uploaded resume. The request must include an authorization header with the candidate's token. Upon successful deletion, the response includes a message confirming that the resume was deleted successfully. For more details, please visit [candidate API specs](/apis/candidate.md).
-
+| Method        | Endpoint                   | Description                                         |
+|---------------|----------------------------|-----------------------------------------------------|
+| POST          | /api/candidates/resume      | Upload a new resume in supported formats.           |
+| GET           | /api/candidates/resume   | Retrieve the original or anonymized version of a resume by ID. |
+| PUT           | /api/candidates/resume   | Update an existing resume with new information.     |
+| DELETE        | /api/candidates/resume   | Delete a specific resume from the system.           |
 
 #### Anonymized Resume Management
 
-##### Upload Anonymized Resume
+The following table summarizes the key API methods for the Anonymized Resume Management module. These methods illustrate how anonymized resumes are created, retrieved, updated, and managed in the system. The exact endpoints and implementations may vary, but this table provides a general overview of the available operations. For more details, please refer to the [detailed Account Management API documentation](apis/anon_resume_management.md).
 
-```
-POST /api/candidates/anonymized
-```
-
-The `Upload Anonymized Resume` method allows an authenticated candidate to upload an anonymized version of their resume. The request must include an authorization header with the candidate's token and use `multipart/form-data` for the request body. The request body should contain the anonymized resume file as a binary attachment. Upon successful upload, the response includes the anonymized resume's ID, file name, upload date in ISO 8601 format, and file size. For more details, please visit [candidate API specs](/apis/candidate.md).
-
-
-##### Get Anonymized Resume
-
-```
-GET /api/candidates/anonymized
-```
-
-The `Get Anonymized Resume` method allows an authenticated candidate to retrieve their uploaded anonymized resume. The request must include an authorization header with the candidate's token. Upon successful retrieval, the response includes the anonymized resume's ID, file name, upload date in ISO 8601 format, file size, and a download URL for the resume file. For more details, please visit [candidate API specs](/apis/candidate.md).
-
-
-##### Delete Anonymized Resume
-
-```
-DELETE /api/candidates/anonymized
-```
-
-The `Delete Anonymized Resume` method allows an authenticated candidate to delete their uploaded anonymized resume. The request must include an authorization header with the candidate's token. Upon successful deletion, the response includes a message confirming that the anonymized resume was deleted successfully. For more details, please visit [candidate API specs](/apis/candidate.md).
-
-
+| Method        | Endpoint                        | Description                                                                                  |
+|---------------|---------------------------------|----------------------------------------------------------------------------------------------|
+| POST          | /api/candidates/anonymized      | Upload an anonymized version of the candidate's resume.                                      |
+| GET           | /api/candidates/anonymized      | Retrieve the uploaded anonymized resume.                                                     |
+| DELETE        | /api/candidates/anonymized      | Delete the uploaded anonymized resume.                                                       |
 
 #### AI Tips
 
@@ -804,40 +669,14 @@ The `Get Resume Tips` method allows an authenticated candidate to receive tips f
 
 #### Job Matching
 
-##### Get Job Matches
+Below is a table summarizing the key API methods for the Job Matching module. These methods illustrate how job matches are retrieved, filtered, and detailed information about jobs is accessed. The exact endpoints and implementations may vary, but this table provides a general overview of the available operations. For more details, please refer to the [detailed Job Matching API documentation](apis/job_matching_api.md).
 
-```
-GET /api/candidates/jobs/matches
-```
+| Method        | Endpoint                              | Description                                                                                  |
+|---------------|---------------------------------------|----------------------------------------------------------------------------------------------|
+| GET           | /api/candidates/jobs/matches          | Retrieve a list of job matches based on the candidate's profile and preferences.             |
+| GET           | /api/candidates/jobs/matches/filter   | Retrieve a list of job matches based on specific filters.                                    |
+| GET           | /api/candidates/jobs/{jobId}          | Retrieve detailed information about a specific job.                                          |
 
-The `Get Job Matches` method allows an authenticated candidate to retrieve a list of job matches based on their profile and preferences. The request must include an authorization header with the candidate's token. Query parameters such as `page` and `limit` can be used to paginate the results. Upon successful retrieval, the response includes the total number of matches, the current page, the limit per page, and a list of job matches. Each job match contains details such as job ID, title, company, location, match score, and posted date in ISO 8601 format. For more details, please visit [candidate API specs](/apis/candidate.md).
-
-##### Retrieve filtered matches
-
-```
-GET /api/candidates/jobs/matches/filter
-```
-
-The `Retrieve Filtered Matches` method allows an authenticated candidate to retrieve a list of job matches based on specific filters. The request must include an authorization header with the candidate's token. Query parameters can be used to filter the results, such as `title`, `company`, `location`, `minMatchScore`, `maxMatchScore`, `fromDate`, `toDate`, `page`, and `limit`. Upon successful retrieval, the response includes the total number of matches, the current page, the limit per page, and a list of job matches. Each job match contains details such as job ID, title, company, location, match score, and posted date in ISO 8601 format. For more details, please visit [candidate API specs](/apis/candidate.md).
-
-
-##### Get Job Details
-
-```
-GET /api/candidates/jobs/{jobId}
-```
-
-The `Get Job Details` method allows an authenticated candidate to retrieve detailed information about a specific job. The request must include an authorization header with the candidate's token and a path parameter specifying the job ID. Upon successful retrieval, the response includes detailed information about the job, such as job ID, title, company, location, description, requirements, posted date in ISO 8601 format, and match score. For more details, please visit [candidate API specs](/apis/candidate.md).
-
-#### Job Applications
-
-##### Apply for Job
-
-```
-POST /api/candidates/jobs/{jobId}/apply
-```
-
-The `Apply for Job` method allows an authenticated candidate to apply for a specific job. The request must include an authorization header with the candidate's token and a path parameter specifying the job ID. Upon successful application, the response includes a 201 Created status and a JSON object containing the application ID, job ID, application date in ISO 8601 format, and the application status. For more details, please visit [candidate API specs](/apis/candidate.md).
 
 ### Employer Endpoint
 
@@ -928,51 +767,19 @@ The API will enable the following operations:
 
 ##### Employer
 
-###### Register employer
+Below is a table summarizing the key API methods for the Employer module. These methods illustrate how employers can register, retrieve details, update information, and deactivate their profiles. The exact endpoints and implementations may vary, but this table provides a general overview of the available operations. For more details, please refer to the [detailed Employer API documentation](apis/employer_api.md).
 
-```
-POST /api/employer
-```
+| Method        | Endpoint                        | Description                                                                                  |
+|---------------|---------------------------------|----------------------------------------------------------------------------------------------|
+| POST          | /api/employer                   | Register a new employer and autofill company details.                                        |
+| GET           | /api/employer/{employer_id}     | Retrieve the employer's account information, including job ads and payment history.          |
+| PUT           | /api/employer/{employer_id}     | Update the employer's profile with new information.                                          |
+| DELETE        | /api/employer/{employer_id}     | Deactivate the employer's profile.                                                           |
+| GET           | /api/employer/{employer_id}/{candidate_id}/anonymized     | Download anonymized candidate resume profile.                                                           |
+| GET           | /api/employer/{employer_id}/candidates/{candidate_id}/resume     | Download unlocked candidate resume                                                            |
 
-The `Register Employer` method allows a new employer to create an account and autofill company details. Upon successful registration, the employer's information is stored, and a unique employer ID is generated. The response includes the employer's ID and details.
 
-###### Retrieve Employer Details
-
-```
-GET /api/employer/{employer_id}
-```
-
-The `Retrieve Employer Details` method allows an employer to view their account information, including job ads and payment history.
-
-###### Update Employer Information
-
-```
-PUT /api/employer/{employer_id}
-```
-
-The `Update Employer Information` method allows an employer to update their profile. The request body should contain the fields to be updated.
-
-###### Deactivate Employer Profile
-
-```
-DELETE /employer/{employer_id}
-```
-
-The `Deactivate Employer Profile` method allows an employer to deactivate their account. Upon successful deactivation, the response includes a confirmation message.
-
-###### Download Anonymized Candidate Resume
-
-```
-GET /api/employer/{employer_id}/{candidate_id}/anonymized
-```
-
-The `Download Anonymized Candidate Resume` method allows an employer to retrieve an anonymized resume for a specific candidate.
-
-##### Download Unlocked Candidate Resume
-
-```
-GET /api/employer/{employer_id}/candidates/{candidate_id}/resume
-```
+**Related ADRs**
 
 | ADR # | Title                               | Why                                                                                                                                                                            | Trade-offs                                                                                                                                                                                   | Link                             |
 | ----- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
@@ -982,80 +789,40 @@ The `Download Unlocked Candidate Resume` method allows an employer to retrieve a
 
 ##### Job Ads
 
-###### Create Job Ad
+Below is a table summarizing the key API methods for the Job Ads module. These methods illustrate how employers can create, retrieve, update, and remove job advertisements. The exact endpoints and implementations may vary, but this table provides a general overview of the available operations.
 
-```
-POST /api/employer/{employer_id}/job
-```
+| Method        | Endpoint                                  | Description                                                                                  |
+|---------------|-------------------------------------------|----------------------------------------------------------------------------------------------|
+| POST          | /api/employer/{employer_id}/job           | Create a new job ad. The request body should contain the details of the job to be posted.    |
+| GET           | /api/employer/{employer_id}/jobs          | Retrieve all job ads for the specified employer.                                             |
+| PUT           | /api/employer/{employer_id}/job/{job_id}  | Update an existing job ad. The request body should include the fields to be updated.         |
+| DELETE        | /api/employer/{employer_id}/job/{job_id}  | Remove a job ad from the employer's list.                                                    |
 
-The `Create Job Ad` method allows an employer to create a new job ad. The request body should contain the details of the job to be posted.
+##### Payments
 
-###### Retrieve Job Ads
+Below is a table summarizing the key API methods for the Payments module. These methods illustrate how employers can make payments and retrieve payment history. The exact endpoints and implementations may vary, but this table provides a general overview of the available operations.
 
-```
-GET /api/employer/{employer_id}/jobs
-```
-
-The `Retrieve Job Ads` method allows an employer to view all of their job ads.
-
-###### Update Job Ad
-
-```
-PUT /api/employer/{employer_id}/job/{job_id}
-```
-
-The `Update Job Ad` method allows an employer to update an existing job ad. The request body should include the fields to be updated.
-
-###### Remove Job Ad
-
-```
-DELETE /api/employer/{employer_id}/job/{job_id}
-```
-
-The `Remove Job Ad` method allows an employer to delete a job ad from their list.
-
-##### Payments:
-
-###### Make Payment
-
-```
-POST /api/employer/{employer_id}/payment
-```
-
-The `Make Payment` method allows an employer to make a payment for unlocking candidate profiles or other services.
-
-###### Retrieve Payment History
-
-```
-GET /api/employer/{employer_id}/payments
-```
-
-The `Retrieve Payment History` method allows an employer to view the history of payments made.
+| Method        | Endpoint                                  | Description                                                                                  |
+|---------------|-------------------------------------------|----------------------------------------------------------------------------------------------|
+| POST          | /api/employer/{employer_id}/payment       | Make a payment for unlocking candidate profiles or other services.                           |
+| GET           | /api/employer/{employer_id}/payments      | Retrieve the history of payments made by the employer.                                       |
 
 ##### HR System Integration
 
-###### Integrate with HR System
+Below is a table summarizing the key API methods for the HR System Integration module. These methods illustrate how employers can integrate and synchronize their HR systems with ClearView. The exact endpoints and implementations may vary, but this table provides a general overview of the available operations.
 
-```
-POST /api/employer/{employer_id}/hr-integration
-```
-
-The `Integrate with HR System` method allows an employer to integrate ClearView with their own HR system.
-
-###### Synchronize with HR System
-
-```
-GET /api/employer/{employer_id}/hr-sync
-```
-
-The `Synchronize with HR System` method allows an employer to synchronize job ads between ClearView and their HR system.
+| Method        | Endpoint                                      | Description                                                                                  |
+|---------------|-----------------------------------------------|----------------------------------------------------------------------------------------------|
+| POST          | /api/employer/{employer_id}/hr-integration    | Integrate ClearView with the employer's HR system.                                           |
+| GET           | /api/employer/{employer_id}/hr-sync           | Synchronize job ads between ClearView and the employer's HR system.                          |
 
 ### Administrator Endpoint
 
 #### Administrator Endpoint Overview
+
 The Administrator Endpoint is designed to provide system administrators with special privileges for managing users, candidates, employers, and the skill-matching configuration. This includes the ability to update hire statuses, modify user data, and change the matching strategy (e.g., switch between Cosine Similarity and LLM-based matching).
 
-##### Related ADRs
+**Related ADRs**
 
 | ADR # | Title                               | Why                                                                                                                                                                            | Trade-offs                                                                                                                                                                                   | Link                             |
 | ----- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
@@ -1064,47 +831,15 @@ The Administrator Endpoint is designed to provide system administrators with spe
 
 ##### Administrator Endpoint Methods
 
-###### Update Candidate Hire Status
+The following table summarizes the key API methods for the Administrator module. These methods illustrate how administrators can update various entities within the system. The exact endpoints and implementations may vary, but this table provides a general overview of the available operations. For more details, please refer to the [detailed Administrator API documentation](apis/admin_api.md).
 
-```
-PUT /api/admin/updateCandidateHireStatus/{candidateId}
-```
-
-The `Update Candidate Hire Status` method allows an administrator to update the hire status of a candidate for a specific job.
-
-###### Update User
-
-```
-PUT /api/admin/updateUser/{userId}
-```
-
-The `Update User` method allows an administrator to update general user data, including for candidates and employers.
-
-###### Update Candidate
-
-```
-PUT /api/admin/updateCandidate/{candidate_id}
-```
-
-The `Update Candidate` method allows an administrator to update candidate details using the candidate's ID.
-
-
-###### Update Employer
-
-```
-PUT /api/admin/updateEmployer/{employer_id}
-```
-
-The `Update Employer` method allows an administrator to update employer-related data using the employer's ID.
-
-###### Update Matching Strategy Configuration
-
-```
-PUT /api/admin/updateMatchingStrategyConfig/{strategy}
-```
-
-The `Update Matching Strategy Configuration` method allows an administrator to update the matching strategy configuration for the skill-matching service (e.g., switch between Cosine Similarity and LLM).
-
+| Method        | Endpoint                                              | Description                                                                                  |
+|---------------|-------------------------------------------------------|----------------------------------------------------------------------------------------------|
+| PUT           | /api/admin/updateCandidateHireStatus/{candidateId}    | Update the hire status of a candidate for a specific job.                                     |
+| PUT           | /api/admin/updateUser/{userId}                        | Update general user data, including for candidates and employers.                            |
+| PUT           | /api/admin/updateCandidate/{candidate_id}             | Update candidate details using the candidate's ID.                                           |
+| PUT           | /api/admin/updateEmployer/{employer_id}               | Update employer-related data using the employer's ID.                                        |
+| PUT           | /api/admin/updateMatchingStrategyConfig/{strategy}    | Update the matching strategy configuration for the skill-matching service.                   |
 
 ``` mermaid
 classDiagram
@@ -1127,6 +862,7 @@ classDiagram
 How It Works:
 
 **AdministratorEndpoint:** A centralized API that provides special privileges to system administrators. Each method manages a different aspect of the system:
+
 - **Candidate:** Admins can update candidate-specific data (skills, resumes) and hire statuses.
 - **Employer:** Admins can modify employer-related data (company details, job posts).
 - **MatchingService:** Admins can change the skill-matching strategy (e.g., switch between Cosine Similarity and LLM).
@@ -1137,74 +873,23 @@ How It Works:
 The Reporting API in ClearView is divided into two key sections: **Business Reporting** and **Service Review**. These sections provide crucial insights into system performance, user engagement, and the health of services.
 
 #### 1. Business Reporting
+
 The **Business Reporting** section focuses on metrics related to users, job postings, and the effectiveness of ClearView’s matching process. It helps employers and system administrators gain insights into the candidate pool, job activity, and the accuracy of the matching algorithm, providing data-driven feedback on the platform’s performance. Key API methods include:
 
 #### Business Reporting API Methods
 
-##### Get Active Candidates
+The following table summarizes the key API methods for the Business Reporting module. These methods provide insights into system performance, user engagement, and the effectiveness of ClearView’s matching process. The exact endpoints and implementations may vary, but this table provides a general overview of the available operations. For more details, please refer to the [detailed Business Reporting API documentation](apis/business_reporting_api.md).
 
-```
-GET /api/reporting/business/activeCandidates
-```
-
-The `Get Active Candidates` method retrieves the number of active candidates over a given period. The parameters `dateFrom` and `dateTo` specify the time range for the data. The response includes a timeline of active candidate counts.
-
-##### Get Active Employers
-
-```
-GET /api/reporting/business/activeEmployers
-```
-
-The `Get Active Employers` method retrieves the number of active employers over a given period. The parameters `dateFrom` and `dateTo` specify the time range for the data. The response includes a timeline of active employer counts.
-
-##### Get Active Jobs
-
-```
-GET /api/reporting/business/activeJobs
-```
-
-The `Get Active Jobs` method retrieves the number of active job postings over a given period. The parameters `dateFrom` and `dateTo` specify the time range for the data. The response includes a timeline of active job counts.
-
-##### Get Score Vs Offer Comparison
-
-```
-GET /api/reporting/business/scoreOfferComparison
-```
-
-The `Get Score Vs Offer Comparison` method provides a histogram showing the distribution of scores and the number of candidates receiving job offers within each score range. This helps determine the accuracy of the matching algorithm by correlating high scores with high job offer counts.
-
-##### Get Score Vs Reject Comparison
-
-```
-GET /api/reporting/business/scoreRejectComparison
-```
-
-The `Get Score Vs Reject Comparison` method provides a histogram showing the distribution of scores and the number of candidates rejected within each score range. This helps identify score ranges where candidates are more likely to be rejected.
-
-##### Get Demographic Offer Reject Breakdown
-
-```
-GET /api/reporting/business/demographicOfferRejectBreakdown
-```
-
-The `Get Demographic Offer Reject Breakdown` method provides data on offers and rejections categorized by demographic groups
-
-##### Get Employer Survey Data
-
-``` 
-GET /api/reporting/business/employerSurvey
-```
-
-The `Get Employer Survey Data` method retrieves feedback from employers, offering insights into their experience with the platform. The response includes survey results.
-
-
-##### Get Candidate Survey Data
-
-```
-GET /api/reporting/business/candidateSurvey
-```
-
-The `Get Candidate Survey Data` method retrieves feedback from candidates, evaluating their experience on the platform. The response includes survey results.
+| Method        | Endpoint                                      | Description                                                                                  |
+|---------------|-----------------------------------------------|----------------------------------------------------------------------------------------------|
+| GET           | /api/reporting/business/activeCandidates      | Retrieve the number of active candidates over a given period.                                |
+| GET           | /api/reporting/business/activeEmployers       | Retrieve the number of active employers over a given period.                                 |
+| GET           | /api/reporting/business/activeJobs            | Retrieve the number of active job postings over a given period.                              |
+| GET           | /api/reporting/business/scoreOfferComparison  | Histogram of scores and job offers.                                                          |
+| GET           | /api/reporting/business/scoreRejectComparison | Histogram of scores and job rejections.                                                      |
+| GET           | /api/reporting/business/demographicOfferRejectBreakdown | Breakdown of offers and rejections by demographics.                                          |
+| GET           | /api/reporting/business/employerSurvey    | Survey data from employers.                                                                  |
+| GET           | /api/reporting/business/candidateSurvey   | Survey data from candidates.                                                                 |
 
 #### 2. Service Review
 
@@ -1212,63 +897,17 @@ The **Service Review** section monitors the health and performance of ClearView�
 
 ##### Service Review API Methods
 
-##### Get Errors Overview
+The following table summarizes the key API methods for the Service Review module. These methods provide insights into system errors, crashes, downtime, and the performance of LLM services. The exact endpoints and implementations may vary, but this table provides a general overview of the available operations. For more details, please refer to the [detailed Service Review API documentation](apis/service_review_api.md).
 
-```
-GET /api/reporting/service/errorsOverview
-```
-
-The `Get Errors Overview` method provides a breakdown of errors across pages, endpoints, or services to help identify and address system issues. The parameter `filterBy` specifies whether to filter by page, endpoint, or service. The response includes the total number of errors and a detailed breakdown.
-
-##### Get Crashes Overview
-
-```
-GET /api/reporting/service/crashesOverview
-```
-
-The `Get Crashes Overview` method retrieves data on system crashes, providing an overview of system stability. The response includes the total number of crashes and detailed crash information.
-
-##### Get Service Downtime
-
-```
-GET /api/reporting/service/serviceDowntime
-```
-
-The `Get Service Downtime` method provides details on service downtime, broken down by different services. The response includes the total downtime and a breakdown by service.
-
-##### Get LLM Latency
-
-```
-GET /api/reporting/service/llmLatency
-```
-
-The `Get LLM Latency` method reports on the latency of LLM services, helping monitor and optimize LLM performance. The response includes the average latency and a breakdown by service.
-
-##### Get LLM Cost
-
-```
-GET /api/reporting/service/llmCost
-```
-
-The `Get LLM Cost` method provides cost data related to running LLM services, offering insights into the financial impact of these operations. The response includes the total cost and a breakdown by usage.
-
-##### Get LLM Capacity Usage
-
-```
-GET /api/reporting/service/llmCapacity
-```
-
-The `Get LLM Capacity Usage` method reports on the capacity usage of the LLM service to ensure the system is operating within its performance limits. The response includes the total capacity used and detailed usage information.
-
-#### Triggering data aggregation
-
-```
-POST /api/reporting/service/runDataAggregation/{dateFrom}/{dateTo}
-```
-
-The `runDataAggregation` method triggers the backend process to gather monthly data. The parameters `dateFrom` and `dateTo` specify the time range for data aggregation.
-This method will run backend process to gather data. Since we are operating on single database, all the aggregation we need at this point can be covered by a Database job. 
-This job could potentially be triggered by schedule in Database, however, based on requirements we want to allow Admin to trigger it as well.
+| Method        | Endpoint                                      | Description                                                                                  |
+|---------------|-----------------------------------------------|----------------------------------------------------------------------------------------------|
+| GET           | /api/reporting/service/errorsOverview         | Provides a breakdown of errors across pages, endpoints, or services.                         |
+| GET           | /api/reporting/service/crashesOverview        | Retrieves data on system crashes, providing an overview of system stability.                 |
+| GET           | /api/reporting/service/serviceDowntime        | Provides details on service downtime, broken down by different services.                     |
+| GET           | /api/reporting/service/llmLatency             | Reports on the latency of LLM services.                                                      |
+| GET           | /api/reporting/service/llmCost                | Provides cost data related to running LLM services.                                          |
+| GET           | /api/reporting/service/llmCapacity            | Reports on the capacity usage of the LLM service.                                            |
+| POST          | /api/reporting/service/runDataAggregation/{dateFrom}/{dateTo} | Triggers the backend process to gather monthly data for a specified time range.              |
 
 
 ## Storage
@@ -1352,5 +991,3 @@ While ClearView does not expect to handle more than **5,000 active candidates** 
 ### Premium Business model
 
 We are considering introducing a **Premium account** option for employers, which would unlock additional **AI-powered features** to enhance the hiring process. One such feature could be the use of **LLM-based matching** instead of the default **Cosine Similarity**. LLM matching, powered by advanced language models, could provide employers with **higher-quality candidate matches** by understanding the deeper context of job descriptions and resumes. However, running LLMs for matching is significantly more **costly** compared to Cosine Similarity, which is why we are exploring offering it as part of a premium service tier. This allows us to deliver enhanced functionality to employers who need it while keeping overall costs manageable for the system.
-
-
